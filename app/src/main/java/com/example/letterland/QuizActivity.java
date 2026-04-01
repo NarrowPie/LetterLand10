@@ -59,9 +59,6 @@ public class QuizActivity extends AppCompatActivity {
         tvProgress = findViewById(R.id.tvQuizProgress);
         ivQuizImage = findViewById(R.id.ivQuizImage);
 
-        // 🚀 HARDWARE ACCELERATION FIX: Forces the graphics unit to render the image properly inside the rounded MaterialCardView
-        ivQuizImage.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
         findViewById(R.id.btnBackQuiz).setOnClickListener(v -> finish());
 
         findViewById(R.id.btnQuizClear).setOnClickListener(v -> {
@@ -180,8 +177,8 @@ public class QuizActivity extends AppCompatActivity {
                         options.inSampleSize = calculateInSampleSize(options, 300, 300);
                         options.inJustDecodeBounds = false;
 
-                        // 🚀 MEMORY FIX: RGB_565 uses 50% less memory than ARGB_8888, preventing OpenGL black-texture limits
-                        options.inPreferredConfig = Bitmap.Config.RGB_565;
+                        // Force accurate color decoding
+                        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
                         Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
 
@@ -214,9 +211,6 @@ public class QuizActivity extends AppCompatActivity {
         }
 
         ImageView ivZoomed = zoomDialog.findViewById(R.id.ivZoomedImage);
-
-        // 🚀 HARDWARE ACCELERATION FIX for the Zoomed Dialog
-        ivZoomed.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         ivZoomed.setImageBitmap(null);
 
         WordEntry currentWord = quizWords.get(currentQuestionIndex);
@@ -231,8 +225,8 @@ public class QuizActivity extends AppCompatActivity {
                     options.inSampleSize = calculateInSampleSize(options, 1024, 1024);
                     options.inJustDecodeBounds = false;
 
-                    // 🚀 MEMORY FIX: Halve the texture size to prevent black screens
-                    options.inPreferredConfig = Bitmap.Config.RGB_565;
+                    // Force accurate color decoding for the zoomed image
+                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
                     Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
 
