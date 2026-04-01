@@ -59,6 +59,9 @@ public class QuizActivity extends AppCompatActivity {
         tvProgress = findViewById(R.id.tvQuizProgress);
         ivQuizImage = findViewById(R.id.ivQuizImage);
 
+        // 🚀 HARDWARE ACCELERATION FIX: Forces the graphics unit to render the image properly inside the rounded MaterialCardView
+        ivQuizImage.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
         findViewById(R.id.btnBackQuiz).setOnClickListener(v -> finish());
 
         findViewById(R.id.btnQuizClear).setOnClickListener(v -> {
@@ -72,7 +75,6 @@ public class QuizActivity extends AppCompatActivity {
             }
         });
 
-        // 🚀 LAG FIX: Tell the user the AI is loading!
         tvLiveText.setText("Loading AI...");
 
         try {
@@ -85,10 +87,8 @@ public class QuizActivity extends AppCompatActivity {
                         recognizer = DigitalInkRecognition.getClient(
                                 DigitalInkRecognizerOptions.builder(model).build());
 
-                        // 🚀 LAG FIX: AI is ready
                         tvLiveText.setText("...");
 
-                        // 🚀 LAG FIX: If they drew something while it was loading, scan it!
                         if (!drawingView.getInk().getStrokes().isEmpty()) {
                             performScan();
                         }
@@ -168,12 +168,9 @@ public class QuizActivity extends AppCompatActivity {
             tvProgress.setText((currentQuestionIndex + 1) + "/" + quizWords.size());
 
             WordEntry currentWord = quizWords.get(currentQuestionIndex);
-
-            // 🚀 BLACK IMAGE FIX: Clear previous image to free memory and prevent overlaps
             ivQuizImage.setImageBitmap(null);
 
             if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-                // 🚀 BLACK IMAGE FIX: Load on a background thread so UI doesn't freeze
                 new Thread(() -> {
                     try {
                         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -182,13 +179,17 @@ public class QuizActivity extends AppCompatActivity {
 
                         options.inSampleSize = calculateInSampleSize(options, 300, 300);
                         options.inJustDecodeBounds = false;
-                        options.inPreferredConfig = Bitmap.Config.ARGB_8888; // Forces proper color decoding
+
+                        // 🚀 MEMORY FIX: RGB_565 uses 50% less memory than ARGB_8888, preventing OpenGL black-texture limits
+                        options.inPreferredConfig = Bitmap.Config.RGB_565;
 
                         Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
 
                         runOnUiThread(() -> {
                             if (scaledBitmap != null) {
                                 ivQuizImage.setImageBitmap(scaledBitmap);
+                            } else {
+                                Toast.makeText(QuizActivity.this, "Image file corrupted. Please re-add it in Almanac.", Toast.LENGTH_SHORT).show();
                             }
                         });
                     } catch (Exception e) {
@@ -213,21 +214,25 @@ public class QuizActivity extends AppCompatActivity {
         }
 
         ImageView ivZoomed = zoomDialog.findViewById(R.id.ivZoomedImage);
-        ivZoomed.setImageBitmap(null); // Clear previous
+
+        // 🚀 HARDWARE ACCELERATION FIX for the Zoomed Dialog
+        ivZoomed.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        ivZoomed.setImageBitmap(null);
 
         WordEntry currentWord = quizWords.get(currentQuestionIndex);
 
         if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-            // 🚀 BLACK IMAGE FIX: Background thread for heavy zoomed image
             new Thread(() -> {
                 try {
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inJustDecodeBounds = true;
                     BitmapFactory.decodeFile(currentWord.imagePath, options);
 
-                    options.inSampleSize = calculateInSampleSize(options, 1024, 1024); // Safe max size
+                    options.inSampleSize = calculateInSampleSize(options, 1024, 1024);
                     options.inJustDecodeBounds = false;
-                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+                    // 🚀 MEMORY FIX: Halve the texture size to prevent black screens
+                    options.inPreferredConfig = Bitmap.Config.RGB_565;
 
                     Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
 
@@ -288,7 +293,6 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void goToResults() {
-        // 🚀 DATABASE SAVING FIX RESTORED! 🚀
         int score = 0;
         for (int i = 0; i < correctAnswers.size(); i++) {
             if (correctAnswers.get(i).equalsIgnoreCase(userAnswers.get(i))) {
@@ -301,7 +305,6 @@ public class QuizActivity extends AppCompatActivity {
 
         QuizRecord newRecord = new QuizRecord(player, score, correctAnswers.size(), currentTime);
         AppDatabase.getInstance(this).quizRecordDao().insertRecord(newRecord);
-        // ---------------------------------------------------------
 
         Intent intent = new Intent(this, com.example.letterland.QuizResultActivity.class);
         intent.putStringArrayListExtra("CORRECT_ANSWERS", correctAnswers);
@@ -313,7 +316,6 @@ public class QuizActivity extends AppCompatActivity {
     private void resetCanvasAndText() {
         drawingView.clearCanvas();
 
-        // 🚀 LAG FIX: Maintain "Loading..." state if recognizer isn't ready when clearing
         if (recognizer == null) {
             tvLiveText.setText("Loading AI...");
         } else {
@@ -326,7 +328,6 @@ public class QuizActivity extends AppCompatActivity {
 
     private void performScan() {
         if (recognizer == null) {
-            // 🚀 LAG FIX: Keep telling the user it's loading!
             tvLiveText.setText("Loading AI...");
             return;
         }
