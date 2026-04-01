@@ -70,7 +70,7 @@ public class AddObjectActivity extends AppCompatActivity {
         });
 
         btnCamera.setOnClickListener(v -> {
-            SoundManager.getInstance(this).playShutter(); // Assuming you have playShutter()
+            SoundManager.getInstance(this).playShutter();
             takePictureLauncher.launch(null);
         });
 
@@ -83,6 +83,22 @@ public class AddObjectActivity extends AppCompatActivity {
             SoundManager.getInstance(this).playClick();
             saveObjectToDatabase();
         });
+    }
+
+    // 🚀 NEW: Method to safely scale down images while maintaining aspect ratio
+    private Bitmap getResizedBitmap(Bitmap image, int maxSize) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        float bitmapRatio = (float) width / (float) height;
+        if (bitmapRatio > 1) {
+            width = maxSize;
+            height = (int) (width / bitmapRatio);
+        } else {
+            height = maxSize;
+            width = (int) (height * bitmapRatio);
+        }
+        return Bitmap.createScaledBitmap(image, width, height, true);
     }
 
     private void saveObjectToDatabase() {
@@ -114,7 +130,12 @@ public class AddObjectActivity extends AppCompatActivity {
             File file = new File(getExternalFilesDir(null), fileName);
 
             try (FileOutputStream out = new FileOutputStream(file)) {
-                selectedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+
+                // 🚀 STORAGE FIX: Shrink the image to a max of 800px before saving
+                Bitmap resizedBitmap = getResizedBitmap(selectedBitmap, 800);
+
+                // 🚀 STORAGE FIX: Compress at 80% quality instead of 90%
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
 
                 // Insert the new word and image path into the Database!
                 WordEntry newEntry = new WordEntry(word, player, file.getAbsolutePath());

@@ -169,18 +169,32 @@ public class QuizActivity extends AppCompatActivity {
 
             WordEntry currentWord = quizWords.get(currentQuestionIndex);
 
+            // 🚀 BLACK IMAGE FIX: Clear previous image to free memory and prevent overlaps
+            ivQuizImage.setImageBitmap(null);
+
             if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inJustDecodeBounds = true;
-                BitmapFactory.decodeFile(currentWord.imagePath, options);
+                // 🚀 BLACK IMAGE FIX: Load on a background thread so UI doesn't freeze
+                new Thread(() -> {
+                    try {
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inJustDecodeBounds = true;
+                        BitmapFactory.decodeFile(currentWord.imagePath, options);
 
-                options.inSampleSize = calculateInSampleSize(options, 200, 200);
-                options.inJustDecodeBounds = false;
+                        options.inSampleSize = calculateInSampleSize(options, 300, 300);
+                        options.inJustDecodeBounds = false;
+                        options.inPreferredConfig = Bitmap.Config.ARGB_8888; // Forces proper color decoding
 
-                Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
-                if (scaledBitmap != null) {
-                    ivQuizImage.setImageBitmap(scaledBitmap);
-                }
+                        Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
+
+                        runOnUiThread(() -> {
+                            if (scaledBitmap != null) {
+                                ivQuizImage.setImageBitmap(scaledBitmap);
+                            }
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -199,24 +213,33 @@ public class QuizActivity extends AppCompatActivity {
         }
 
         ImageView ivZoomed = zoomDialog.findViewById(R.id.ivZoomedImage);
+        ivZoomed.setImageBitmap(null); // Clear previous
+
         WordEntry currentWord = quizWords.get(currentQuestionIndex);
 
-        try {
-            if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inJustDecodeBounds = true;
-                BitmapFactory.decodeFile(currentWord.imagePath, options);
+        if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
+            // 🚀 BLACK IMAGE FIX: Background thread for heavy zoomed image
+            new Thread(() -> {
+                try {
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(currentWord.imagePath, options);
 
-                options.inSampleSize = calculateInSampleSize(options, 800, 800);
-                options.inJustDecodeBounds = false;
+                    options.inSampleSize = calculateInSampleSize(options, 1024, 1024); // Safe max size
+                    options.inJustDecodeBounds = false;
+                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
-                Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
-                if (scaledBitmap != null) {
-                    ivZoomed.setImageBitmap(scaledBitmap);
+                    Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
+
+                    runOnUiThread(() -> {
+                        if (scaledBitmap != null) {
+                            ivZoomed.setImageBitmap(scaledBitmap);
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            }).start();
         }
 
         zoomDialog.findViewById(R.id.rootZoomLayout).setOnClickListener(v1 -> {
