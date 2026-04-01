@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:fitsSystemWindows="true"> <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnAdminBack"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginTop="16dp"
+    android:fontFamily="@font/kid_font"
+    android:text="BACK TO MENU"
+    android:textColor="#FFFFFF"
+    app:backgroundTint="#F44336"
+    app:cornerRadius="20dp"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnResetPin"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:fontFamily="@font/kid_font"
+        android:text="RESET PIN"
+        android:textColor="#000000"
+        app:icon="@android:drawable/ic_secure"
+        app:iconTint="#000000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvAdminTitle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:fontFamily="@font/kid_font"
+        android:gravity="center"
+        android:text="ADMIN PANEL"
+        android:textColor="#333333"
+        android:includeFontPadding="false"
+        app:autoSizeTextType="uniform"
+        app:autoSizeMaxTextSize="36sp"
+        app:autoSizeMinTextSize="24sp"
+        app:layout_constraintBottom_toTopOf="@id/guideCenter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnAdminBack" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideCenter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.25" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:paddingHorizontal="16dp"
+        android:orientation="vertical"
+        android:weightSum="4"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/guideCenter">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginVertical="8dp"
+            android:layout_weight="1"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAdminUserLogs"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="@font/kid_font"
+                android:text="📜 HISTORY LOGS\n(User Collection)"
+                android:textColor="#FF9800"
+                android:gravity="start|center_vertical"
+                android:paddingStart="24dp"
+                android:paddingEnd="16dp"
+                android:maxLines="2"
+                android:includeFontPadding="false"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="20sp"
+                app:autoSizeMinTextSize="12sp"
+                app:backgroundTint="#FFF3E0"
+                app:icon="@android:drawable/ic_menu_today"
+                app:iconGravity="start"
+                app:iconPadding="16dp"
+                app:iconSize="28dp"
+                app:iconTint="#FF9800" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginVertical="8dp"
+            android:layout_weight="1"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAdminQuizRecord"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="@font/kid_font"
+                android:text="📊 QUIZ RECORDS\n(Student Scores)"
+                android:textColor="#9C27B0"
+                android:gravity="start|center_vertical"
+                android:paddingStart="24dp"
+                android:paddingEnd="16dp"
+                android:maxLines="2"
+                android:includeFontPadding="false"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="20sp"
+                app:autoSizeMinTextSize="12sp"
+                app:backgroundTint="#F3E5F5"
+                app:icon="@android:drawable/ic_menu_sort_by_size"
+                app:iconGravity="start"
+                app:iconPadding="16dp"
+                app:iconSize="28dp"
+                app:iconTint="#9C27B0" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginVertical="8dp"
+            android:layout_weight="1"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAdminAddObject"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="@font/kid_font"
+                android:text="➕ ADD NEW OBJECT\nTO ALMANAC"
+                android:textColor="#4CAF50"
+                android:gravity="start|center_vertical"
+                android:paddingStart="24dp"
+                android:paddingEnd="16dp"
+                android:maxLines="2"
+                android:includeFontPadding="false"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="20sp"
+                app:autoSizeMinTextSize="12sp"
+                app:backgroundTint="#E8F5E9"
+                app:icon="@android:drawable/ic_menu_add"
+                app:iconGravity="start"
+                app:iconPadding="16dp"
+                app:iconSize="28dp"
+                app:iconTint="#4CAF50" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginVertical="8dp"
+            android:layout_weight="1"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAdminDeletedLogs"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fontFamily="@font/kid_font"
+                android:text="🗑 DELETED ITEMS\nHISTORY"
+                android:textColor="#F44336"
+                android:gravity="start|center_vertical"
+                android:paddingStart="24dp"
+                android:paddingEnd="16dp"
+                android:maxLines="2"
+                android:includeFontPadding="false"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMaxTextSize="20sp"
+                app:autoSizeMinTextSize="12sp"
+                app:backgroundTint="#FFEBEE"
+                app:icon="@android:drawable/ic_menu_delete"
+                app:iconGravity="start"
+                app:iconPadding="16dp"
+                app:iconSize="28dp"
+                app:iconTint="#F44336" />
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

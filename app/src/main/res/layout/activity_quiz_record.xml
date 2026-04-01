@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:padding="16dp">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRecordBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/kid_font"
+        android:text="BACK"
+        android:textColor="#FFFFFF"
+        app:backgroundTint="#F44336"
+        app:cornerRadius="20dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvRecordTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/kid_font"
+        android:text="QUIZ RECORDS"
+        android:textColor="#9C27B0"
+        android:textSize="32sp"
+        app:layout_constraintBottom_toBottomOf="@id/btnRecordBack"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btnRecordBack"
+        app:layout_constraintTop_toTopOf="@id/btnRecordBack" />
+
+    <TextView
+        android:id="@+id/tvNoRecords"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/kid_font"
+        android:text="No records found yet!\nGo play a quiz!"
+        android:textAlignment="center"
+        android:textColor="#888888"
+        android:textSize="24sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvRecordTitle" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvQuizRecords"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btnRecordBack" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
