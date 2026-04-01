@@ -2,8 +2,6 @@ package com.example.letterland;
 
 import android.app.Dialog;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,6 +14,10 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy; // 🚀 NEW: Import for cache control
+import com.bumptech.glide.request.RequestOptions; // 🚀 NEW: Import for advanced options
 
 import com.google.mlkit.common.MlKitException;
 import com.google.mlkit.common.model.DownloadConditions;
@@ -144,55 +146,30 @@ public class QuizActivity extends AppCompatActivity {
         }).start();
     }
 
-    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-        return inSampleSize;
-    }
-
     private void loadCurrentQuestion() {
         try {
             resetCanvasAndText();
             tvProgress.setText((currentQuestionIndex + 1) + "/" + quizWords.size());
 
             WordEntry currentWord = quizWords.get(currentQuestionIndex);
-            ivQuizImage.setImageBitmap(null);
 
             if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-                new Thread(() -> {
-                    try {
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inJustDecodeBounds = true;
-                        BitmapFactory.decodeFile(currentWord.imagePath, options);
 
-                        options.inSampleSize = calculateInSampleSize(options, 300, 300);
-                        options.inJustDecodeBounds = false;
+                // 🚀 DIAGNOSTIC TRAP ACTIVATED
+                RequestOptions options = new RequestOptions()
+                        .fitCenter()  // 🛑 Stops stretching the image if it's too small!
+                        .dontTransform()
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
+                        .disallowHardwareConfig()
+                        .error(R.drawable.title_logo); // 🚨 IF BROKEN, SHOWS THE LOGO
 
-                        // Force accurate color decoding
-                        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-                        Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
-
-                        runOnUiThread(() -> {
-                            if (scaledBitmap != null) {
-                                ivQuizImage.setImageBitmap(scaledBitmap);
-                            } else {
-                                Toast.makeText(QuizActivity.this, "Image file corrupted. Please re-add it in Almanac.", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }).start();
+                Glide.with(this)
+                        .load(currentWord.imagePath)
+                        .apply(options)
+                        .into(ivQuizImage);
+            } else {
+                ivQuizImage.setImageDrawable(null);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -211,34 +188,24 @@ public class QuizActivity extends AppCompatActivity {
         }
 
         ImageView ivZoomed = zoomDialog.findViewById(R.id.ivZoomedImage);
-        ivZoomed.setImageBitmap(null);
 
         WordEntry currentWord = quizWords.get(currentQuestionIndex);
 
         if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-            new Thread(() -> {
-                try {
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inJustDecodeBounds = true;
-                    BitmapFactory.decodeFile(currentWord.imagePath, options);
 
-                    options.inSampleSize = calculateInSampleSize(options, 1024, 1024);
-                    options.inJustDecodeBounds = false;
+            // 🚀 DIAGNOSTIC TRAP FOR ZOOM DIALOG
+            RequestOptions options = new RequestOptions()
+                    .fitCenter() // 🛑 Stops stretching!
+                    .dontTransform()
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+                    .disallowHardwareConfig()
+                    .error(R.drawable.title_logo); // 🚨 IF BROKEN, SHOWS LOGO
 
-                    // Force accurate color decoding for the zoomed image
-                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-                    Bitmap scaledBitmap = BitmapFactory.decodeFile(currentWord.imagePath, options);
-
-                    runOnUiThread(() -> {
-                        if (scaledBitmap != null) {
-                            ivZoomed.setImageBitmap(scaledBitmap);
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }).start();
+            Glide.with(zoomDialog.getContext())
+                    .load(currentWord.imagePath)
+                    .apply(options)
+                    .into(ivZoomed);
         }
 
         zoomDialog.findViewById(R.id.rootZoomLayout).setOnClickListener(v1 -> {

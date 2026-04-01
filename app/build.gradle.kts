@@ -56,7 +56,7 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$camerax_version")
     implementation("androidx.camera:camera-lifecycle:$camerax_version")
     implementation("androidx.camera:camera-view:$camerax_version")
-
+    implementation("com.github.bumptech.glide:glide:4.16.0")
     // 🌟 UPDATED: Removed Text Recognition, Added Digital Ink Recognition 🌟
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.mlkit:digital-ink-recognition:18.1.0")
