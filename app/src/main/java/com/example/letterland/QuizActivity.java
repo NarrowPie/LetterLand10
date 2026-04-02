@@ -17,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.RequestOptions;
 
 import com.google.mlkit.common.MlKitException;
 import com.google.mlkit.common.model.DownloadConditions;
@@ -101,7 +100,6 @@ public class QuizActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        // ✏️ UPDATE: Trigger the sound when drawing starts, stop when finished!
         drawingView.setOnDrawListener(new DrawingView.OnDrawListener() {
             @Override
             public void onDrawStarted() {
@@ -136,7 +134,7 @@ public class QuizActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
 
                 if (quizReadyWords.size() < 10) {
-                    showLockedDialog(); // Calls the new custom layout
+                    showLockedDialog();
                 } else {
                     Collections.shuffle(quizReadyWords);
                     int limit = Math.min(quizReadyWords.size(), 10);
@@ -157,7 +155,6 @@ public class QuizActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         SoundManager.getInstance(this).pauseBackgroundMusic();
-        // ✏️ Safety catch: stop scratching if the app is minimized while drawing
         SoundManager.getInstance(this).stopScratchSound();
     }
 
@@ -167,7 +164,7 @@ public class QuizActivity extends AppCompatActivity {
         Dialog lockedDialog = new Dialog(this);
         lockedDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         lockedDialog.setContentView(R.layout.dialog_mode_locked);
-        lockedDialog.setCancelable(false); // Prevents tapping outside to close
+        lockedDialog.setCancelable(false);
 
         if (lockedDialog.getWindow() != null) {
             lockedDialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
@@ -177,7 +174,6 @@ public class QuizActivity extends AppCompatActivity {
             SoundManager.getInstance(this).playClick();
             lockedDialog.dismiss();
 
-            // Navigate back to MainActivity safely
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
@@ -197,18 +193,13 @@ public class QuizActivity extends AppCompatActivity {
             WordEntry currentWord = quizWords.get(currentQuestionIndex);
 
             if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-
-                RequestOptions options = new RequestOptions()
-                        .fitCenter()
-                        .dontTransform()
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .skipMemoryCache(true)
-                        .disallowHardwareConfig()
-                        .error(R.drawable.title_logo);
-
+                // 🚀 FIX: Removed the restrictive RequestOptions.
+                // Standard caching handles unique file paths perfectly without breaking hardware bitmaps.
                 Glide.with(this)
                         .load(currentWord.imagePath)
-                        .apply(options)
+                        .fitCenter()
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .error(R.drawable.title_logo)
                         .into(ivQuizImage);
             } else {
                 ivQuizImage.setImageDrawable(null);
@@ -236,18 +227,12 @@ public class QuizActivity extends AppCompatActivity {
         WordEntry currentWord = quizWords.get(currentQuestionIndex);
 
         if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-
-            RequestOptions options = new RequestOptions()
-                    .fitCenter()
-                    .dontTransform()
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .skipMemoryCache(true)
-                    .disallowHardwareConfig()
-                    .error(R.drawable.title_logo);
-
+            // 🚀 FIX: Applied standard Glide loading here as well
             Glide.with(zoomDialog.getContext())
                     .load(currentWord.imagePath)
-                    .apply(options)
+                    .fitCenter()
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .error(R.drawable.title_logo)
                     .into(ivZoomed);
         }
 

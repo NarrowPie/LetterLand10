@@ -38,7 +38,7 @@
         app:layout_constraintStart_toEndOf="@id/btnBackQuiz"
         app:layout_constraintTop_toTopOf="@id/btnBackQuiz" />
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardQuizImage"
         android:layout_width="80dp"
         android:layout_height="80dp"
@@ -46,25 +46,18 @@
         android:layout_marginEnd="16dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="#4CAF50"
+        app:strokeColor="#4CAF50"
+        app:strokeWidth="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.cardview.widget.CardView
+        <ImageView
+            android:id="@+id/ivQuizImage"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_margin="4dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="0dp">
-
-            <ImageView
-                android:id="@+id/ivQuizImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                tools:src="@tools:sample/avatars" />
-        </androidx.cardview.widget.CardView>
-    </androidx.cardview.widget.CardView>
+            android:scaleType="centerCrop"
+            tools:src="@tools:sample/avatars" />
+    </com.google.android.material.card.MaterialCardView>
 
     <TextView
         android:id="@+id/tvZoomHint"

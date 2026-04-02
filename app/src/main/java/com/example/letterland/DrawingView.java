@@ -94,6 +94,10 @@ public class DrawingView extends View {
             };
             magnifierOverlay.setClickable(false);
             magnifierOverlay.setFocusable(false);
+
+            // 🚀 FIX: Prevent 'clipPath' from causing black screen bugs on Android 14+
+            magnifierOverlay.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
             root.addView(magnifierOverlay, new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -103,14 +107,11 @@ public class DrawingView extends View {
 
     @Override
     protected void onDetachedFromWindow() {
-        // 🚀 CRITICAL FIX: Safely remove the overlay without crashing Android's layout loop!
         if (magnifierOverlay != null) {
             final View overlayToRemove = magnifierOverlay;
             final ViewGroup parent = (ViewGroup) overlayToRemove.getParent();
 
             if (parent != null) {
-                // Post the removal to the main thread queue.
-                // This waits for Android to finish its current detachment loop before removing the view!
                 new Handler(Looper.getMainLooper()).post(() -> {
                     try {
                         parent.removeView(overlayToRemove);
