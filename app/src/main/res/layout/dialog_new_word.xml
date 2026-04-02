@@ -4,6 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="16dp"
+    android:minWidth="320dp"
+    app:cardBackgroundColor="#FFFFFF"
     app:cardCornerRadius="24dp"
     app:cardElevation="8dp"
     app:strokeColor="#FF9800"
@@ -12,52 +14,68 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center">
+        android:padding="24dp">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New Object Found!"
-            android:textSize="24sp"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginBottom="8dp"
             android:fontFamily="@font/kid_font"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="New Object Found!"
             android:textColor="#FF9800"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            app:autoSizeMaxTextSize="24sp"
+            app:autoSizeMinTextSize="14sp"
+            app:autoSizeTextType="uniform" />
 
         <TextView
             android:id="@+id/tvDetectedWord"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="WORD"
-            android:textSize="36sp"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="24dp"
             android:fontFamily="@font/kid_font"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="WORD"
             android:textColor="#000000"
             android:textStyle="bold"
-            android:layout_marginBottom="24dp"/>
+            app:autoSizeMaxTextSize="36sp"
+            app:autoSizeMinTextSize="16sp"
+            app:autoSizeTextType="uniform" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDialogCamera"
             android:layout_width="match_parent"
             android:layout_height="65dp"
             android:layout_marginBottom="16dp"
-            android:text="TAKE A PICTURE"
-            android:textSize="20sp"
             android:fontFamily="@font/kid_font"
+            android:maxLines="1"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="TAKE A PICTURE"
+            android:textColor="#FFFFFF"
+            app:autoSizeMaxTextSize="20sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform"
+            app:backgroundTint="#4CAF50"
+            app:cornerRadius="16dp"
             app:icon="@android:drawable/ic_menu_camera"
             app:iconGravity="textStart"
-            app:backgroundTint="#4CAF50"
-            app:cornerRadius="16dp"/>
+            app:iconPadding="4dp"
+            app:iconTint="#FFFFFF" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDialogLater"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Maybe Later"
+            android:layout_height="48dp"
             android:fontFamily="@font/kid_font"
-            android:textColor="#757575"/>
+            android:text="Maybe Later"
+            android:textColor="#757575" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

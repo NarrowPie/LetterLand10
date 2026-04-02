@@ -5,14 +5,17 @@
     android:layout_height="match_parent"
     android:background="#F5F5F5"
     android:fitsSystemWindows="true"
-    android:padding="12dp">
+    android:padding="16dp">
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogsBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         android:fontFamily="@font/kid_font"
+        android:minHeight="48dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="10dp"
         android:text="BACK"
         android:textColor="#FFFFFF"
         app:backgroundTint="#F44336"
@@ -22,10 +25,12 @@
 
     <TextView
         android:id="@+id/tvLogsTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:fontFamily="@font/kid_font"
+        android:gravity="center"
+        android:padding="4dp"
         android:text="USER HISTORY LOGS"
         android:textColor="#333333"
         android:textSize="24sp"
@@ -37,7 +42,7 @@
         android:id="@+id/layoutActionControls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="4dp"
@@ -49,6 +54,8 @@
             android:layout_height="wrap_content"
             android:buttonTint="#2196F3"
             android:fontFamily="@font/kid_font"
+            android:minHeight="48dp"
+            android:paddingStart="8dp"
             android:text="Select All"
             android:textColor="#333333"
             android:textSize="16sp"
@@ -64,6 +71,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/kid_font"
+            android:minHeight="48dp"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="10dp"
             android:text="DELETE"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
@@ -77,7 +87,7 @@
         android:id="@+id/rvUserLogsList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutActionControls" />
 

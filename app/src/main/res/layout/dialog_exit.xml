@@ -14,56 +14,73 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         android:padding="24dp">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
             android:fontFamily="@font/kid_font"
+            android:gravity="center"
+            android:maxLines="1"
             android:text="Leaving so soon?"
             android:textColor="#000000"
-            android:textSize="32sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:autoSizeMaxTextSize="32sp"
+            app:autoSizeMinTextSize="16sp"
+            app:autoSizeTextType="uniform" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="24dp"
             android:fontFamily="@font/kid_font"
+            android:gravity="center"
+            android:maxLines="2"
             android:text="Do you really want to exit LetterLand?"
             android:textColor="#333333"
-            android:textSize="22sp"
-            android:gravity="center" />
+            app:autoSizeMaxTextSize="22sp"
+            app:autoSizeMinTextSize="14sp"
+            app:autoSizeTextType="uniform" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:baselineAligned="false"
+            android:gravity="center"
+            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancelExit"
-                android:layout_width="130dp"
+                android:layout_width="0dp"
                 android:layout_height="65dp"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
                 android:fontFamily="@font/kid_font"
+                android:maxLines="1"
                 android:text="STAY"
                 android:textColor="#FFFFFF"
-                android:textSize="22sp"
+                app:autoSizeMaxTextSize="22sp"
+                app:autoSizeMinTextSize="12sp"
+                app:autoSizeTextType="uniform"
                 app:backgroundTint="#4CAF50"
                 app:cornerRadius="20dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnConfirmExit"
-                android:layout_width="130dp"
+                android:layout_width="0dp"
                 android:layout_height="65dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
                 android:fontFamily="@font/kid_font"
+                android:maxLines="1"
                 android:text="EXIT"
                 android:textColor="#FFFFFF"
-                android:textSize="22sp"
+                app:autoSizeMaxTextSize="22sp"
+                app:autoSizeMinTextSize="12sp"
+                app:autoSizeTextType="uniform"
                 app:backgroundTint="#F44336"
                 app:cornerRadius="20dp" />
         </LinearLayout>
