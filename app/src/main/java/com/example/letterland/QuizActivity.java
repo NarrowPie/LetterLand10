@@ -127,7 +127,6 @@ public class QuizActivity extends AppCompatActivity {
         new Thread(() -> {
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
 
-            // 🚀 CRITICAL FIX: Only pull STARRED words!
             List<WordEntry> quizReadyWords = AppDatabase.getInstance(this).wordDao().getStarredWordsForProfile(player);
 
             runOnUiThread(() -> {
@@ -274,7 +273,8 @@ public class QuizActivity extends AppCompatActivity {
         String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
         long currentTime = System.currentTimeMillis();
 
-        QuizRecord newRecord = new QuizRecord(player, score, correctAnswers.size(), currentTime);
+        // 🚀 CRITICAL UPDATE: Pass the two Arrays to the Database!
+        QuizRecord newRecord = new QuizRecord(player, score, correctAnswers.size(), currentTime, correctAnswers, userAnswers);
         AppDatabase.getInstance(this).quizRecordDao().insertRecord(newRecord);
 
         Intent intent = new Intent(this, com.example.letterland.QuizResultActivity.class);
