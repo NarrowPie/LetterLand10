@@ -1,118 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="16dp"
-    app:cardBackgroundColor="#E1F5FE"
     app:cardCornerRadius="24dp"
     app:cardElevation="8dp"
-    app:strokeColor="#29B6F6"
+    app:strokeColor="#FF9800"
     app:strokeWidth="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center"
-        android:padding="20dp">
+        android:padding="24dp"
+        android:gravity="center">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="New Object Found!"
+            android:textSize="24sp"
             android:fontFamily="@font/kid_font"
-            android:text="WOW!"
-            android:textColor="#4CAF50"
-            android:textSize="32sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="8dp"
-            android:fontFamily="@font/kid_font"
-            android:text="You found a new word!"
-            android:textColor="#333333"
-            android:textSize="20sp"
-            android:gravity="center" />
+            android:textColor="#FF9800"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
 
         <TextView
             android:id="@+id/tvDetectedWord"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:fontFamily="@font/kid_font"
             android:text="WORD"
-            android:textColor="#E91E63"
-            android:textSize="40sp"
-            android:textStyle="bold" />
+            android:textSize="36sp"
+            android:fontFamily="@font/kid_font"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
 
-        <LinearLayout
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDialogCamera"
             android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:layout_marginBottom="16dp"
+            android:text="TAKE A PICTURE"
+            android:textSize="20sp"
+            android:fontFamily="@font/kid_font"
+            app:icon="@android:drawable/ic_menu_camera"
+            app:iconGravity="textStart"
+            app:backgroundTint="#4CAF50"
+            app:cornerRadius="16dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDialogLater"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:baselineAligned="false"
-            android:gravity="center">
+            android:text="Maybe Later"
+            android:fontFamily="@font/kid_font"
+            android:textColor="#757575"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDialogGallery"
-                android:layout_width="0dp"
-                android:layout_height="60dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                android:padding="0dp"
-                android:fontFamily="@font/kid_font"
-                android:text="Gallery"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                app:backgroundTint="#29B6F6"
-                app:cornerRadius="16dp"
-                app:icon="@android:drawable/ic_menu_gallery"
-                app:iconGravity="top"
-                app:iconPadding="0dp"
-                app:iconSize="20dp"
-                app:iconTint="#FFFFFF" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDialogCamera"
-                android:layout_width="0dp"
-                android:layout_height="60dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                android:padding="0dp"
-                android:fontFamily="@font/kid_font"
-                android:text="Camera"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                app:backgroundTint="#4CAF50"
-                app:cornerRadius="16dp"
-                app:icon="@android:drawable/ic_menu_camera"
-                app:iconGravity="top"
-                app:iconPadding="0dp"
-                app:iconSize="20dp"
-                app:iconTint="#FFFFFF" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDialogLater"
-                android:layout_width="0dp"
-                android:layout_height="60dp"
-                android:layout_weight="1"
-                android:insetLeft="0dp"
-                android:insetRight="0dp"
-                android:padding="0dp"
-                android:fontFamily="@font/kid_font"
-                android:text="Later"
-                android:textColor="#F44336"
-                android:textSize="16sp"
-                app:backgroundTint="@android:color/transparent"
-                app:elevation="0dp"
-                app:strokeWidth="0dp" />
-        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

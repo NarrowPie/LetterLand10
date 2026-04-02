@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
@@ -50,23 +49,7 @@ public class WriteActivity extends AppCompatActivity {
             }
     );
 
-    private final ActivityResultLauncher<String> pickImageLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
-            uri -> {
-                if (uri != null && !pendingWord.isEmpty()) {
-                    new Thread(() -> {
-                        try {
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-                            saveToAlmanac(pendingWord, bitmap);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }).start();
-                } else {
-                    resetCanvasAndText();
-                }
-            }
-    );
+    // 🚀 REMOVED: Gallery launcher has been deleted to enforce Camera-only!
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,7 +123,6 @@ public class WriteActivity extends AppCompatActivity {
     }
 
     private void performScan() {
-        // 🚀 CRITICAL FIX: Abort if activity is closing to prevent crash
         if (isFinishing() || isDestroyed()) return;
 
         if (recognizer == null) {
@@ -154,7 +136,7 @@ public class WriteActivity extends AppCompatActivity {
 
         recognizer.recognize(ink)
                 .addOnSuccessListener(result -> {
-                    if (isFinishing() || isDestroyed()) return; // Extra safety
+                    if (isFinishing() || isDestroyed()) return;
                     if (!result.getCandidates().isEmpty()) {
                         String cleanWord = result.getCandidates().get(0).getText().toUpperCase();
                         cleanWord = cleanWord.trim();
@@ -188,7 +170,6 @@ public class WriteActivity extends AppCompatActivity {
             WordEntry savedWord = AppDatabase.getInstance(this).wordDao().findWordForProfile(word, player);
 
             runOnUiThread(() -> {
-                // 🚀 CRITICAL FIX: Check if active
                 if (isFinishing() || isDestroyed()) return;
 
                 if (savedWord != null) {
@@ -227,12 +208,7 @@ public class WriteActivity extends AppCompatActivity {
             customDialog.dismiss();
         });
 
-        dialogView.findViewById(R.id.btnDialogGallery).setOnClickListener(v1 -> {
-            SoundManager.getInstance(this).playClick();
-            pendingWord = wordToSave;
-            pickImageLauncher.launch("image/*");
-            customDialog.dismiss();
-        });
+        // 🚀 REMOVED: Gallery Button Click Listener has been deleted!
 
         dialogView.findViewById(R.id.btnDialogLater).setOnClickListener(v1 -> {
             SoundManager.getInstance(this).playClick();
@@ -256,7 +232,6 @@ public class WriteActivity extends AppCompatActivity {
             AppDatabase.getInstance(this).wordDao().insert(newEntry);
 
             runOnUiThread(() -> {
-                // 🚀 CRITICAL FIX: Check if active
                 if (isFinishing() || isDestroyed()) return;
 
                 Toast.makeText(this, word + " saved!", Toast.LENGTH_SHORT).show();
@@ -275,7 +250,6 @@ public class WriteActivity extends AppCompatActivity {
         }
     }
 
-    // 🚀 CRITICAL FIX: Clean up handlers when exiting to stop background crashes
     @Override
     protected void onDestroy() {
         super.onDestroy();

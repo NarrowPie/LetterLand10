@@ -5,11 +5,9 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,7 +18,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
@@ -41,7 +38,6 @@ import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class PlayActivity extends AppCompatActivity {
@@ -75,27 +71,7 @@ public class PlayActivity extends AppCompatActivity {
             }
     );
 
-    private final ActivityResultLauncher<String> pickImageLauncher = registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
-            uri -> {
-                if (uri != null && !pendingWord.isEmpty()) {
-                    new Thread(() -> {
-                        try {
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-                            saveToAlmanac(pendingWord, bitmap);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            runOnUiThread(() -> {
-                                Toast.makeText(this, "Error loading image", Toast.LENGTH_SHORT).show();
-                                resumeRealTimeScanning();
-                            });
-                        }
-                    }).start();
-                } else {
-                    resumeRealTimeScanning();
-                }
-            }
-    );
+    // 🚀 REMOVED: The Gallery (pickImageLauncher) has been completely removed!
 
     private void loadDictionaryFromAssets() {
         try {
@@ -179,7 +155,6 @@ public class PlayActivity extends AppCompatActivity {
                         intent.putExtra("IMAGE_PATH", savedWord.imagePath);
                         intent.putExtra("SOURCE_PAGE", "SCANNER");
                         startActivity(intent);
-                        // Removed resumeRealTimeScanning() here so onResume natively handles it
                     } else {
                         View dialogView = LayoutInflater.from(PlayActivity.this).inflate(R.layout.dialog_new_word, null);
 
@@ -201,11 +176,7 @@ public class PlayActivity extends AppCompatActivity {
                             customDialog.dismiss();
                         });
 
-                        dialogView.findViewById(R.id.btnDialogGallery).setOnClickListener(v1 -> {
-                            pendingWord = wordToSearch;
-                            pickImageLauncher.launch("image/*");
-                            customDialog.dismiss();
-                        });
+                        // 🚀 REMOVED: Gallery Button Logic has been stripped out.
 
                         dialogView.findViewById(R.id.btnDialogLater).setOnClickListener(v1 -> {
                             customDialog.dismiss();
@@ -261,14 +232,13 @@ public class PlayActivity extends AppCompatActivity {
             int height = Math.min(scanContainer.getHeight(), fullBitmap.getHeight() - startY);
 
             if(width <= 0 || height <= 0 || startX < 0 || startY < 0) {
-                fullBitmap.recycle(); // Prevent leak on invalid dimensions
+                fullBitmap.recycle();
                 realTimeHandler.postDelayed(this, 300);
                 return;
             }
 
             Bitmap croppedBitmap = Bitmap.createBitmap(fullBitmap, startX, startY, width, height);
 
-            // 🌟 MEMORY LEAK FIX: We only need the crop, so recycle the massive full screen frame immediately
             if (fullBitmap != croppedBitmap) {
                 fullBitmap.recycle();
             }
@@ -330,9 +300,7 @@ public class PlayActivity extends AppCompatActivity {
                         }
                     })
                     .addOnCompleteListener(task -> {
-                        // 🌟 MEMORY LEAK FIX: ML Kit is done, recycle the cropped frame
                         croppedBitmap.recycle();
-
                         if (!isScanningPaused) {
                             realTimeHandler.postDelayed(realTimeRunnable, 300);
                         }
@@ -376,7 +344,6 @@ public class PlayActivity extends AppCompatActivity {
                 intent.putExtra("IMAGE_PATH", file.getAbsolutePath());
                 intent.putExtra("SOURCE_PAGE", "SCANNER");
                 startActivity(intent);
-                // Removed resumeRealTimeScanning() here so onResume natively handles it
             });
         } catch (java.io.IOException e) {
             e.printStackTrace();
@@ -416,7 +383,6 @@ public class PlayActivity extends AppCompatActivity {
         return dp[a.length()][b.length()];
     }
 
-    // 🌟 MEMORY FIX: Auto-resume when coming back from WordDetailActivity
     @Override
     protected void onResume() {
         super.onResume();
@@ -425,7 +391,6 @@ public class PlayActivity extends AppCompatActivity {
         }
     }
 
-    // 🌟 MEMORY FIX: Hard stop the scanner loop when going to another Activity
     @Override
     protected void onPause() {
         super.onPause();
