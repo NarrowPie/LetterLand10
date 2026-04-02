@@ -17,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 
 import com.google.mlkit.common.MlKitException;
 import com.google.mlkit.common.model.DownloadConditions;
@@ -29,7 +28,6 @@ import com.google.mlkit.vision.digitalink.DigitalInkRecognizer;
 import com.google.mlkit.vision.digitalink.DigitalInkRecognizerOptions;
 import com.google.mlkit.vision.digitalink.Ink;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -196,18 +194,15 @@ public class QuizActivity extends AppCompatActivity {
 
             if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
 
-                // 🚀 FIX: Force Glide to wait for layout & use CrossFade to bypass Android 16 GPU bugs
-                ivQuizImage.post(() -> {
-                    if (isFinishing() || isDestroyed()) return;
-
-                    Glide.with(QuizActivity.this)
-                            .load(new File(currentWord.imagePath)) // Force File parsing for safety
-                            .transition(DrawableTransitionOptions.withCrossFade(250)) // Prevents raw hardware buffer crash
-                            .fitCenter()
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                            .error(R.drawable.title_logo)
-                            .into(ivQuizImage);
-                });
+                // 🚀 FIX: Prevent Android 14+ GPU Black Screen Crash
+                // Removed CrossFade and forced dontAnimate() so the rounded MaterialCardView doesn't crash the hardware buffer
+                Glide.with(this)
+                        .load(currentWord.imagePath)
+                        .dontAnimate() // Absolutely no transitions
+                        .centerCrop()
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .error(R.drawable.title_logo)
+                        .into(ivQuizImage);
 
             } else {
                 ivQuizImage.setImageDrawable(null);
@@ -235,16 +230,15 @@ public class QuizActivity extends AppCompatActivity {
         WordEntry currentWord = quizWords.get(currentQuestionIndex);
 
         if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
+
             // 🚀 FIX: Apply the exact same safety loading here
-            ivZoomed.post(() -> {
-                Glide.with(zoomDialog.getContext())
-                        .load(new File(currentWord.imagePath))
-                        .transition(DrawableTransitionOptions.withCrossFade(250))
-                        .fitCenter()
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .error(R.drawable.title_logo)
-                        .into(ivZoomed);
-            });
+            Glide.with(zoomDialog.getContext())
+                    .load(currentWord.imagePath)
+                    .dontAnimate()
+                    .fitCenter()
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .error(R.drawable.title_logo)
+                    .into(ivZoomed);
         }
 
         zoomDialog.findViewById(R.id.rootZoomLayout).setOnClickListener(v1 -> {
