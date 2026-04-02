@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
@@ -19,11 +18,14 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,10 +33,13 @@ public class MainActivity extends AppCompatActivity {
     private boolean isMusicOn = true;
     private SharedPreferences prefs;
 
+    // Optimized background thread manager
+    private final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
+
     private final ActivityResultLauncher<String> requestCameraPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (!isGranted) {
-                    Toast.makeText(this, "Camera permission is required to play! Closing app...", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.toast_camera_required), Toast.LENGTH_LONG).show();
                     finishAffinity();
                 }
             });
@@ -81,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
                 });
 
             } else {
-                Toast.makeText(MainActivity.this, "Please enter your name first!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, getString(R.string.toast_enter_name), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -115,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(MainActivity.this, ProfilesActivity.class));
         });
 
-        // 🚀 UPDATED ADMIN BUTTON: NOW CALLS THE PIN DIALOG 🚀
         btnAdmin.setOnClickListener(v -> {
             soundManager.playClick();
             showAdminPinDialog();
@@ -144,9 +148,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ==========================================
-    // 🧩 THE CHOOSE A GAME DIALOG (WITH QUIZ LOCK LOGIC)
-    // ==========================================
     private void showPlayOptionsDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         android.view.View view = getLayoutInflater().inflate(R.layout.dialog_play_options, null);
@@ -186,24 +187,25 @@ public class MainActivity extends AppCompatActivity {
         if (btnQuiz != null && tvQuizHint != null) {
             btnQuiz.setEnabled(false);
 
-            new Thread(() -> {
+            // Optimized: Using managed ExecutorService instead of raw Threads
+            databaseExecutor.execute(() -> {
                 String player = prefs.getString("ACTIVE_PROFILE", "Default");
                 int wordCount = AppDatabase.getInstance(MainActivity.this).wordDao().getAllWordsForProfile(player).size();
 
                 runOnUiThread(() -> {
                     if (wordCount >= 10) {
                         btnQuiz.setEnabled(true);
-                        btnQuiz.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9C27B0")));
+                        btnQuiz.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.quiz_unlocked_purple)));
                         tvQuizHint.setVisibility(View.GONE);
                     } else {
                         btnQuiz.setEnabled(false);
-                        btnQuiz.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
+                        btnQuiz.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.quiz_locked_grey)));
                         int itemsNeeded = 10 - wordCount;
-                        tvQuizHint.setText("Collect " + itemsNeeded + " more item(s) in Almanac to unlock!");
+                        tvQuizHint.setText(getString(R.string.tv_quiz_unlock_hint, itemsNeeded));
                         tvQuizHint.setVisibility(View.VISIBLE);
                     }
                 });
-            }).start();
+            });
 
             btnQuiz.setOnClickListener(v -> {
                 SoundManager.getInstance(this).playClick();
@@ -246,9 +248,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // =======================================================
-    // 🔒 SECURITY: ADMIN PIN DIALOG
-    // =======================================================
     private void showAdminPinDialog() {
         android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_admin_pin, null);
         android.app.AlertDialog pinDialog = new android.app.AlertDialog.Builder(this)
@@ -270,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
             SoundManager.getInstance(this).playClick();
             String enteredPin = etPin.getText().toString();
 
-            // 🚀 CHANGED: Fetch the live PIN from memory instead of hardcoding 1234!
             String savedPin = prefs.getString("ADMIN_PIN", "1234");
 
             if (enteredPin.equals(savedPin)) {
@@ -278,8 +276,8 @@ public class MainActivity extends AppCompatActivity {
                 hushMusic();
                 startActivity(new Intent(MainActivity.this, AdminActivity.class));
             } else {
-                Toast.makeText(this, "Incorrect PIN! Access Denied.", Toast.LENGTH_SHORT).show();
-                etPin.setText(""); // Clear the box for another try
+                Toast.makeText(this, getString(R.string.toast_incorrect_pin), Toast.LENGTH_SHORT).show();
+                etPin.setText("");
             }
         });
 
@@ -298,13 +296,19 @@ public class MainActivity extends AppCompatActivity {
         ImageView ivPic = findViewById(R.id.ivActivePlayerPic);
 
         if (activePlayer.isEmpty()) {
-            tvName.setText("Select Player!");
+            tvName.setText(getString(R.string.tv_select_player));
             ivPic.setImageResource(R.drawable.admin_pic);
         } else {
             tvName.setText(activePlayer);
             String avatarPath = prefs.getString("AVATAR_" + activePlayer, null);
+
+            // Optimized: Using Glide instead of raw URI parsing to prevent memory crashes
             if (avatarPath != null) {
-                ivPic.setImageURI(android.net.Uri.parse(avatarPath));
+                Glide.with(this)
+                        .load(avatarPath)
+                        .placeholder(R.drawable.admin_pic)
+                        .error(R.drawable.admin_pic)
+                        .into(ivPic);
             } else {
                 ivPic.setImageResource(R.drawable.admin_pic);
             }
@@ -344,6 +348,10 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer.stop();
             mediaPlayer.release();
             mediaPlayer = null;
+        }
+        // Optimized: Shutdown thread executor to free system resources
+        if (!databaseExecutor.isShutdown()) {
+            databaseExecutor.shutdown();
         }
     }
 }
