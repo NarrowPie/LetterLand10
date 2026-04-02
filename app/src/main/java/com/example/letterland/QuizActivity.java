@@ -136,12 +136,7 @@ public class QuizActivity extends AppCompatActivity {
                 if (isFinishing() || isDestroyed()) return;
 
                 if (quizReadyWords.size() < 10) {
-                    new AlertDialog.Builder(QuizActivity.this)
-                            .setTitle("Not Enough Starred Words")
-                            .setMessage("Profile '" + player + "' only has " + quizReadyWords.size() + " approved words.\nYou need at least 10 STARRED items to play Quiz Mode!\n\nGo to Admin Panel -> Edit Almanac to star items.")
-                            .setPositiveButton("OK", (dialog, which) -> finish())
-                            .setCancelable(false)
-                            .show();
+                    showLockedDialog(); // Calls the new custom layout
                 } else {
                     Collections.shuffle(quizReadyWords);
                     int limit = Math.min(quizReadyWords.size(), 10);
@@ -164,6 +159,32 @@ public class QuizActivity extends AppCompatActivity {
         SoundManager.getInstance(this).pauseBackgroundMusic();
         // ✏️ Safety catch: stop scratching if the app is minimized while drawing
         SoundManager.getInstance(this).stopScratchSound();
+    }
+
+    private void showLockedDialog() {
+        if (isFinishing() || isDestroyed()) return;
+
+        Dialog lockedDialog = new Dialog(this);
+        lockedDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        lockedDialog.setContentView(R.layout.dialog_mode_locked);
+        lockedDialog.setCancelable(false); // Prevents tapping outside to close
+
+        if (lockedDialog.getWindow() != null) {
+            lockedDialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        lockedDialog.findViewById(R.id.btnDialogOk).setOnClickListener(v -> {
+            SoundManager.getInstance(this).playClick();
+            lockedDialog.dismiss();
+
+            // Navigate back to MainActivity safely
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
+        lockedDialog.show();
     }
 
     private void loadCurrentQuestion() {
