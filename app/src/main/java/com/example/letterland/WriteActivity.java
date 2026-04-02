@@ -81,7 +81,6 @@ public class WriteActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> finish());
 
-        // 🚀 LAG FIX: Tell the user the AI is loading!
         tvLiveText.setText("Loading AI...");
 
         try {
@@ -94,10 +93,8 @@ public class WriteActivity extends AppCompatActivity {
                         recognizer = DigitalInkRecognition.getClient(
                                 DigitalInkRecognizerOptions.builder(model).build());
 
-                        // 🚀 LAG FIX: The AI is ready!
                         tvLiveText.setText("...");
 
-                        // 🚀 LAG FIX: If the user already started drawing while waiting, scan it instantly!
                         if (!drawingView.getInk().getStrokes().isEmpty()) {
                             performScan();
                         }
@@ -143,8 +140,10 @@ public class WriteActivity extends AppCompatActivity {
     }
 
     private void performScan() {
+        // 🚀 CRITICAL FIX: Abort if activity is closing to prevent crash
+        if (isFinishing() || isDestroyed()) return;
+
         if (recognizer == null) {
-            // 🚀 LAG FIX: Remind them it's still loading instead of failing silently
             tvLiveText.setText("Loading AI...");
             return;
         }
@@ -155,6 +154,7 @@ public class WriteActivity extends AppCompatActivity {
 
         recognizer.recognize(ink)
                 .addOnSuccessListener(result -> {
+                    if (isFinishing() || isDestroyed()) return; // Extra safety
                     if (!result.getCandidates().isEmpty()) {
                         String cleanWord = result.getCandidates().get(0).getText().toUpperCase();
                         cleanWord = cleanWord.trim();
@@ -168,6 +168,7 @@ public class WriteActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    if (isFinishing() || isDestroyed()) return;
                     tvLiveText.setText("...");
                 });
     }
@@ -187,6 +188,9 @@ public class WriteActivity extends AppCompatActivity {
             WordEntry savedWord = AppDatabase.getInstance(this).wordDao().findWordForProfile(word, player);
 
             runOnUiThread(() -> {
+                // 🚀 CRITICAL FIX: Check if active
+                if (isFinishing() || isDestroyed()) return;
+
                 if (savedWord != null) {
                     android.content.Intent intent = new android.content.Intent(WriteActivity.this, WordDetailActivity.class);
                     intent.putExtra("WORD_TEXT", savedWord.word);
@@ -202,6 +206,8 @@ public class WriteActivity extends AppCompatActivity {
     }
 
     private void showNewWordDialog(String wordToSave) {
+        if (isFinishing() || isDestroyed()) return;
+
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_new_word, null);
         AlertDialog customDialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -250,6 +256,9 @@ public class WriteActivity extends AppCompatActivity {
             AppDatabase.getInstance(this).wordDao().insert(newEntry);
 
             runOnUiThread(() -> {
+                // 🚀 CRITICAL FIX: Check if active
+                if (isFinishing() || isDestroyed()) return;
+
                 Toast.makeText(this, word + " saved!", Toast.LENGTH_SHORT).show();
                 pendingWord = "";
 
@@ -263,6 +272,18 @@ public class WriteActivity extends AppCompatActivity {
             });
         } catch (java.io.IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    // 🚀 CRITICAL FIX: Clean up handlers when exiting to stop background crashes
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (scanRunnable != null) {
+            scanHandler.removeCallbacks(scanRunnable);
+        }
+        if (recognizer != null) {
+            recognizer.close();
         }
     }
 }

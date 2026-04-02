@@ -16,8 +16,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy; // 🚀 NEW: Import for cache control
-import com.bumptech.glide.request.RequestOptions; // 🚀 NEW: Import for advanced options
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 
 import com.google.mlkit.common.MlKitException;
 import com.google.mlkit.common.model.DownloadConditions;
@@ -129,6 +129,9 @@ public class QuizActivity extends AppCompatActivity {
             List<WordEntry> allWords = AppDatabase.getInstance(this).wordDao().getAllWordsForProfile(player);
 
             runOnUiThread(() -> {
+                // 🚀 CRITICAL FIX: Check if active
+                if (isFinishing() || isDestroyed()) return;
+
                 if (allWords.size() < 10) {
                     new AlertDialog.Builder(QuizActivity.this)
                             .setTitle("Not Enough Words")
@@ -147,6 +150,8 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void loadCurrentQuestion() {
+        if (isFinishing() || isDestroyed()) return;
+
         try {
             resetCanvasAndText();
             tvProgress.setText((currentQuestionIndex + 1) + "/" + quizWords.size());
@@ -155,14 +160,13 @@ public class QuizActivity extends AppCompatActivity {
 
             if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
 
-                // 🚀 DIAGNOSTIC TRAP ACTIVATED
                 RequestOptions options = new RequestOptions()
-                        .fitCenter()  // 🛑 Stops stretching the image if it's too small!
+                        .fitCenter()
                         .dontTransform()
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .skipMemoryCache(true)
                         .disallowHardwareConfig()
-                        .error(R.drawable.title_logo); // 🚨 IF BROKEN, SHOWS THE LOGO
+                        .error(R.drawable.title_logo);
 
                 Glide.with(this)
                         .load(currentWord.imagePath)
@@ -177,6 +181,8 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void showZoomedImageDialog() {
+        if (isFinishing() || isDestroyed()) return;
+
         SoundManager.getInstance(this).playClick();
 
         Dialog zoomDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
@@ -193,14 +199,13 @@ public class QuizActivity extends AppCompatActivity {
 
         if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
 
-            // 🚀 DIAGNOSTIC TRAP FOR ZOOM DIALOG
             RequestOptions options = new RequestOptions()
-                    .fitCenter() // 🛑 Stops stretching!
+                    .fitCenter()
                     .dontTransform()
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
                     .disallowHardwareConfig()
-                    .error(R.drawable.title_logo); // 🚨 IF BROKEN, SHOWS LOGO
+                    .error(R.drawable.title_logo);
 
             Glide.with(zoomDialog.getContext())
                     .load(currentWord.imagePath)
@@ -217,6 +222,8 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void showCustomConfirmDialog() {
+        if (isFinishing() || isDestroyed()) return;
+
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_quiz_confirm, null);
         AlertDialog confirmDialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -254,6 +261,9 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void goToResults() {
+        // 🚀 CRITICAL FIX: Ensure no delayed scans fire after moving to results!
+        if (scanRunnable != null) scanHandler.removeCallbacks(scanRunnable);
+
         int score = 0;
         for (int i = 0; i < correctAnswers.size(); i++) {
             if (correctAnswers.get(i).equalsIgnoreCase(userAnswers.get(i))) {
@@ -288,6 +298,9 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void performScan() {
+        // 🚀 CRITICAL FIX: Abort if activity is closing to prevent crash
+        if (isFinishing() || isDestroyed()) return;
+
         if (recognizer == null) {
             tvLiveText.setText("Loading AI...");
             return;
@@ -298,6 +311,7 @@ public class QuizActivity extends AppCompatActivity {
 
         recognizer.recognize(ink)
                 .addOnSuccessListener(result -> {
+                    if (isFinishing() || isDestroyed()) return; // Extra safety
                     if (!result.getCandidates().isEmpty()) {
                         String cleanWord = result.getCandidates().get(0).getText().toUpperCase().trim();
 
@@ -310,7 +324,20 @@ public class QuizActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    if (isFinishing() || isDestroyed()) return;
                     tvLiveText.setText("...");
                 });
+    }
+
+    // 🚀 CRITICAL FIX: Clean up handlers when exiting to stop background crashes
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (scanRunnable != null) {
+            scanHandler.removeCallbacks(scanRunnable);
+        }
+        if (recognizer != null) {
+            recognizer.close();
+        }
     }
 }

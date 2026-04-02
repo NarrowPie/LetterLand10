@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -101,10 +103,21 @@ public class DrawingView extends View {
 
     @Override
     protected void onDetachedFromWindow() {
+        // 🚀 CRITICAL FIX: Safely remove the overlay without crashing Android's layout loop!
         if (magnifierOverlay != null) {
-            ViewGroup root = (ViewGroup) getRootView().findViewById(android.R.id.content);
-            if (root != null) {
-                root.removeView(magnifierOverlay);
+            final View overlayToRemove = magnifierOverlay;
+            final ViewGroup parent = (ViewGroup) overlayToRemove.getParent();
+
+            if (parent != null) {
+                // Post the removal to the main thread queue.
+                // This waits for Android to finish its current detachment loop before removing the view!
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    try {
+                        parent.removeView(overlayToRemove);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
             }
             magnifierOverlay = null;
         }
@@ -176,12 +189,7 @@ public class DrawingView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
-        // 🌟 THE FIX: "Brush Radius Clamping"
-        // We dynamically calculate exactly half the thickness of your digital pen.
-        // We then force the center of your touch to stay that exact distance away from the walls!
         float brushRadius = drawPaint.getStrokeWidth() / 2f;
-
-        // Add a tiny extra 2px buffer just to ensure it looks perfectly tucked inside rounded corners
         float safetyBuffer = brushRadius + 2f;
 
         currentX = Math.max(safetyBuffer, Math.min(event.getX(), getWidth() - safetyBuffer));
@@ -195,7 +203,6 @@ public class DrawingView extends View {
                 drawPath.moveTo(currentX, currentY);
                 updateBounds(currentX, currentY);
 
-                // Start a new ML Kit stroke
                 strokeBuilder = Ink.Stroke.builder();
                 strokeBuilder.addPoint(Ink.Point.create(currentX, currentY, t));
 
@@ -206,7 +213,6 @@ public class DrawingView extends View {
                 drawPath.lineTo(currentX, currentY);
                 updateBounds(currentX, currentY);
 
-                // Add points to the stroke
                 if (strokeBuilder != null) {
                     strokeBuilder.addPoint(Ink.Point.create(currentX, currentY, t));
                 }
@@ -218,7 +224,6 @@ public class DrawingView extends View {
                 drawCanvas.drawPath(drawPath, drawPaint);
                 drawPath.reset();
 
-                // Finish the stroke
                 if (strokeBuilder != null) {
                     strokeBuilder.addPoint(Ink.Point.create(currentX, currentY, t));
                     inkBuilder.addStroke(strokeBuilder.build());
@@ -244,7 +249,6 @@ public class DrawingView extends View {
         maxX = 0;
         maxY = 0;
 
-        // Clear the ML Kit ink memory
         inkBuilder = Ink.builder();
 
         invalidate();
@@ -270,7 +274,6 @@ public class DrawingView extends View {
         return Bitmap.createBitmap(canvasBitmap, left, top, width, height);
     }
 
-    // Fetch the handwriting data
     public Ink getInk() {
         return inkBuilder.build();
     }
