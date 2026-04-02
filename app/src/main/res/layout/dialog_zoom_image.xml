@@ -16,6 +16,7 @@
         app:cardElevation="24dp"
         app:strokeColor="#FFFFFF"
         app:strokeWidth="8dp"
+        app:layout_constrainedHeight="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -24,8 +25,9 @@
         <ImageView
             android:id="@+id/ivZoomedImage"
             android:layout_width="match_parent"
-            android:layout_height="400dp"
-            android:scaleType="centerCrop" />
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter" />
     </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
