@@ -13,32 +13,44 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class QuizRecordAdapter extends RecyclerView.Adapter<QuizRecordAdapter.RecordViewHolder> {
-    private List<QuizRecord> records = new ArrayList<>();
-    private SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy - hh:mm a", Locale.getDefault());
+public class QuizRecordAdapter extends RecyclerView.Adapter<QuizRecordAdapter.ViewHolder> {
 
-    public void setRecords(List<QuizRecord> records) {
+    private final List<QuizRecord> records;
+
+    public QuizRecordAdapter(List<QuizRecord> records) {
         this.records = records;
-        notifyDataSetChanged();
     }
 
     @NonNull
     @Override
-    public RecordViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_quiz_record, parent, false);
-        return new RecordViewHolder(view);
+        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecordViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         QuizRecord record = records.get(position);
 
-        holder.tvPlayerName.setText("Player: " + record.playerName);
-        holder.tvScore.setText("Score: " + record.score + " / " + record.totalItems);
-        holder.tvDate.setText(sdf.format(new Date(record.timestamp)));
+        // Uses playerName from the QuizRecord database entity
+        holder.tvStudentName.setText("Student: " + record.playerName);
+        holder.tvScore.setText("Score: " + record.score + "/" + record.totalItems);
 
-        // 🚀 NEW: Make the item clickable!
-        // We pass the saved data over, and flag "IS_HISTORY" as true!
+        // Color code the score: Green if passed, Orange if okay, Red if failed
+        float percentage = (float) record.score / record.totalItems;
+        if (percentage >= 0.7f) {
+            holder.tvScore.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
+        } else if (percentage >= 0.4f) {
+            holder.tvScore.setTextColor(android.graphics.Color.parseColor("#FF9800"));
+        } else {
+            holder.tvScore.setTextColor(android.graphics.Color.parseColor("#F44336"));
+        }
+
+        // Convert the raw millisecond time into a readable format
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy - hh:mm a", Locale.getDefault());
+        holder.tvTimestamp.setText(sdf.format(new Date(record.timestamp)));
+
+        // 🚀 THE FIX: Make the item clickable to view the past answers!
         holder.itemView.setOnClickListener(v -> {
             SoundManager.getInstance(v.getContext()).playClick();
             Intent intent = new Intent(v.getContext(), QuizResultActivity.class);
@@ -58,14 +70,14 @@ public class QuizRecordAdapter extends RecyclerView.Adapter<QuizRecordAdapter.Re
         return records.size();
     }
 
-    class RecordViewHolder extends RecyclerView.ViewHolder {
-        TextView tvPlayerName, tvScore, tvDate;
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView tvStudentName, tvScore, tvTimestamp;
 
-        public RecordViewHolder(@NonNull View itemView) {
+        public ViewHolder(View itemView) {
             super(itemView);
-            tvPlayerName = itemView.findViewById(R.id.tvRecordPlayer);
-            tvScore = itemView.findViewById(R.id.tvRecordScore);
-            tvDate = itemView.findViewById(R.id.tvRecordDate);
+            tvStudentName = itemView.findViewById(R.id.tvStudentName);
+            tvScore = itemView.findViewById(R.id.tvScore);
+            tvTimestamp = itemView.findViewById(R.id.tvTimestamp);
         }
     }
 }
