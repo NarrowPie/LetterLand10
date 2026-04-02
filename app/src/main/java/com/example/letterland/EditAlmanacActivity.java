@@ -23,7 +23,9 @@ public class EditAlmanacActivity extends AppCompatActivity {
     private RecyclerView rvEditAlmanac;
     private EditWordAdapter adapter;
 
-    // 🌟 NEW: Added onResume so if an item is renamed or deleted, it updates automatically!
+    // 🌟 TRACK FILTER STATE
+    private boolean isShowingStarredOnly = false;
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -37,6 +39,7 @@ public class EditAlmanacActivity extends AppCompatActivity {
 
         rvEditAlmanac = findViewById(R.id.rvAlmanac);
         ImageButton btnBack = findViewById(R.id.btnBackAlmanac);
+        ImageButton btnFilterStarred = findViewById(R.id.btnFilterStarred); // 🌟 LINK BUTTON
 
         TextView tvTitle = findViewById(R.id.tvAlmanacTitle);
         if(tvTitle != null) {
@@ -47,6 +50,20 @@ public class EditAlmanacActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> {
             SoundManager.getInstance(this).playClick();
             finish();
+        });
+
+        // 🌟 FILTER BUTTON LOGIC
+        btnFilterStarred.setOnClickListener(v -> {
+            SoundManager.getInstance(this).playClick();
+            isShowingStarredOnly = !isShowingStarredOnly;
+
+            if (isShowingStarredOnly) {
+                btnFilterStarred.setImageResource(android.R.drawable.btn_star_big_on);
+            } else {
+                btnFilterStarred.setImageResource(android.R.drawable.btn_star_big_off);
+            }
+
+            loadWordsFromDatabase();
         });
 
         int screenWidthDp = getResources().getConfiguration().screenWidthDp;
@@ -63,7 +80,14 @@ public class EditAlmanacActivity extends AppCompatActivity {
         new Thread(() -> {
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
 
-            List<WordEntry> myWords = AppDatabase.getInstance(this).wordDao().getAllWordsForProfile(player);
+            List<WordEntry> myWords;
+            if (isShowingStarredOnly) {
+                // 🌟 GET ONLY STARRED WORDS
+                myWords = AppDatabase.getInstance(this).wordDao().getStarredWordsForProfile(player);
+            } else {
+                // 🌟 GET ALL WORDS
+                myWords = AppDatabase.getInstance(this).wordDao().getAllWordsForProfile(player);
+            }
 
             runOnUiThread(() -> adapter.updateData(myWords));
         }).start();
@@ -105,7 +129,6 @@ public class EditAlmanacActivity extends AppCompatActivity {
                 holder.ivStar.setImageResource(android.R.drawable.btn_star_big_off);
             }
 
-            // 🌟 1. TOGGLE STAR ONLY WHEN TAPPING THE STAR ICON
             holder.ivStar.setOnClickListener(v -> {
                 SoundManager.getInstance(v.getContext()).playClick();
 
@@ -125,16 +148,12 @@ public class EditAlmanacActivity extends AppCompatActivity {
                 }).start();
             });
 
-            // 🌟 2. OPEN DETAIL VIEW TO EDIT WHEN TAPPING THE REST OF THE CARD
             holder.itemView.setOnClickListener(v -> {
                 SoundManager.getInstance(v.getContext()).playClick();
                 android.content.Intent intent = new android.content.Intent(v.getContext(), WordDetailActivity.class);
                 intent.putExtra("WORD_TEXT", currentWord.word);
                 intent.putExtra("IMAGE_PATH", currentWord.imagePath);
-
-                // This tells the detail screen to show the Admin Edit Buttons!
                 intent.putExtra("SOURCE_PAGE", "EDIT_ALMANAC");
-
                 v.getContext().startActivity(intent);
             });
         }

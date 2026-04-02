@@ -22,6 +22,9 @@ public class AlmanacActivity extends AppCompatActivity {
     private RecyclerView rvAlmanac;
     private WordAdapter adapter;
 
+    // 🌟 TRACK FILTER STATE
+    private boolean isShowingStarredOnly = false;
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -35,16 +38,29 @@ public class AlmanacActivity extends AppCompatActivity {
 
         rvAlmanac = findViewById(R.id.rvAlmanac);
         ImageButton btnBack = findViewById(R.id.btnBackAlmanac);
+        ImageButton btnFilterStarred = findViewById(R.id.btnFilterStarred); // 🌟 LINK BUTTON
 
         btnBack.setOnClickListener(v -> {
             SoundManager.getInstance(this).playClick();
             finish();
         });
 
-        // 🌟 DYNAMIC DEVICE LAYOUT: Automatically calculates how many columns to show!
-        // This completely prevents massive stretched images on tablets or in landscape mode.
+        // 🌟 FILTER BUTTON LOGIC
+        btnFilterStarred.setOnClickListener(v -> {
+            SoundManager.getInstance(this).playClick();
+            isShowingStarredOnly = !isShowingStarredOnly;
+
+            if (isShowingStarredOnly) {
+                btnFilterStarred.setImageResource(android.R.drawable.btn_star_big_on);
+            } else {
+                btnFilterStarred.setImageResource(android.R.drawable.btn_star_big_off);
+            }
+
+            loadWordsFromDatabase();
+        });
+
         int screenWidthDp = getResources().getConfiguration().screenWidthDp;
-        int columns = Math.max(2, screenWidthDp / 160); // Creates a new column for every 160dp of space
+        int columns = Math.max(2, screenWidthDp / 160);
 
         rvAlmanac.setLayoutManager(new GridLayoutManager(this, columns));
         adapter = new WordAdapter(new ArrayList<>());
@@ -56,7 +72,15 @@ public class AlmanacActivity extends AppCompatActivity {
     private void loadWordsFromDatabase() {
         new Thread(() -> {
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
-            List<WordEntry> myWords = AppDatabase.getInstance(this).wordDao().getAllWordsForProfile(player);
+
+            List<WordEntry> myWords;
+            if (isShowingStarredOnly) {
+                // 🌟 GET ONLY STARRED WORDS
+                myWords = AppDatabase.getInstance(this).wordDao().getStarredWordsForProfile(player);
+            } else {
+                // 🌟 GET ALL WORDS
+                myWords = AppDatabase.getInstance(this).wordDao().getAllWordsForProfile(player);
+            }
 
             runOnUiThread(() -> adapter.updateData(myWords));
         }).start();
@@ -95,6 +119,13 @@ public class AlmanacActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
+            // 🌟 SHOW OR HIDE THE STAR BASED ON STATUS
+            if (currentWord.isStarred) {
+                holder.ivStar.setVisibility(View.VISIBLE);
+            } else {
+                holder.ivStar.setVisibility(View.GONE);
+            }
+
             holder.itemView.setOnClickListener(v -> {
                 SoundManager.getInstance(v.getContext()).playClick();
                 android.content.Intent intent = new android.content.Intent(v.getContext(), WordDetailActivity.class);
@@ -113,11 +144,13 @@ public class AlmanacActivity extends AppCompatActivity {
         class WordViewHolder extends RecyclerView.ViewHolder {
             ImageView ivImage;
             TextView tvWord;
+            ImageView ivStar; // 🌟 LINK NEW ICON
 
             public WordViewHolder(@NonNull View itemView) {
                 super(itemView);
                 ivImage = itemView.findViewById(R.id.ivGalleryImage);
                 tvWord = itemView.findViewById(R.id.tvGalleryWord);
+                ivStar = itemView.findViewById(R.id.ivStar);
             }
         }
     }
