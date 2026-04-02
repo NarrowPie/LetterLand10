@@ -101,13 +101,16 @@ public class QuizActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        // ✏️ UPDATE: Trigger the sound when drawing starts, stop when finished!
         drawingView.setOnDrawListener(new DrawingView.OnDrawListener() {
             @Override
             public void onDrawStarted() {
+                SoundManager.getInstance(QuizActivity.this).startScratchSound();
                 if (scanRunnable != null) scanHandler.removeCallbacks(scanRunnable);
             }
             @Override
             public void onDrawFinished() {
+                SoundManager.getInstance(QuizActivity.this).stopScratchSound();
                 scanRunnable = () -> performScan();
                 scanHandler.postDelayed(scanRunnable, 400);
             }
@@ -147,6 +150,20 @@ public class QuizActivity extends AppCompatActivity {
                 }
             });
         }).start();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SoundManager.getInstance(this).startBackgroundMusic();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SoundManager.getInstance(this).pauseBackgroundMusic();
+        // ✏️ Safety catch: stop scratching if the app is minimized while drawing
+        SoundManager.getInstance(this).stopScratchSound();
     }
 
     private void loadCurrentQuestion() {
@@ -273,7 +290,6 @@ public class QuizActivity extends AppCompatActivity {
         String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
         long currentTime = System.currentTimeMillis();
 
-        // 🚀 CRITICAL UPDATE: Pass the two Arrays to the Database!
         QuizRecord newRecord = new QuizRecord(player, score, correctAnswers.size(), currentTime, correctAnswers, userAnswers);
         AppDatabase.getInstance(this).quizRecordDao().insertRecord(newRecord);
 
@@ -331,6 +347,7 @@ public class QuizActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        SoundManager.getInstance(this).stopScratchSound();
         if (scanRunnable != null) {
             scanHandler.removeCallbacks(scanRunnable);
         }

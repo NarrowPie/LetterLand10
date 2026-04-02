@@ -49,8 +49,6 @@ public class WriteActivity extends AppCompatActivity {
             }
     );
 
-    // 🚀 REMOVED: Gallery launcher has been deleted to enforce Camera-only!
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,9 +89,11 @@ public class WriteActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        // ✏️ UPDATE: Trigger the sound when drawing starts, stop when finished!
         drawingView.setOnDrawListener(new DrawingView.OnDrawListener() {
             @Override
             public void onDrawStarted() {
+                SoundManager.getInstance(WriteActivity.this).startScratchSound();
                 if (scanRunnable != null) {
                     scanHandler.removeCallbacks(scanRunnable);
                 }
@@ -101,6 +101,7 @@ public class WriteActivity extends AppCompatActivity {
 
             @Override
             public void onDrawFinished() {
+                SoundManager.getInstance(WriteActivity.this).stopScratchSound();
                 scanRunnable = () -> performScan();
                 scanHandler.postDelayed(scanRunnable, 600);
             }
@@ -120,6 +121,20 @@ public class WriteActivity extends AppCompatActivity {
                 checkWordDatabase(currentlyDetectedWord);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SoundManager.getInstance(this).startBackgroundMusic();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SoundManager.getInstance(this).pauseBackgroundMusic();
+        // ✏️ Safety catch: stop scratching if the app is minimized while drawing
+        SoundManager.getInstance(this).stopScratchSound();
     }
 
     private void performScan() {
@@ -208,8 +223,6 @@ public class WriteActivity extends AppCompatActivity {
             customDialog.dismiss();
         });
 
-        // 🚀 REMOVED: Gallery Button Click Listener has been deleted!
-
         dialogView.findViewById(R.id.btnDialogLater).setOnClickListener(v1 -> {
             SoundManager.getInstance(this).playClick();
             customDialog.dismiss();
@@ -253,6 +266,7 @@ public class WriteActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        SoundManager.getInstance(this).stopScratchSound();
         if (scanRunnable != null) {
             scanHandler.removeCallbacks(scanRunnable);
         }
