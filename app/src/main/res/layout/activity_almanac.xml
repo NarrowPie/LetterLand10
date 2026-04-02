@@ -21,15 +21,18 @@
 
     <TextView
         android:id="@+id/tvAlmanacTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginHorizontal="8dp"
         android:fontFamily="@font/kid_font"
+        android:gravity="center"
         android:text="ALMANAC"
         android:textColor="#4CAF50"
         android:textSize="36sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:includeFontPadding="false"
+        app:layout_constraintEnd_toStartOf="@+id/btnFilterStarred"
+        app:layout_constraintStart_toEndOf="@+id/btnBackAlmanac"
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
@@ -50,7 +53,8 @@
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         android:clipToPadding="false"
-        android:padding="8dp"
+        android:padding="12dp"
+        android:paddingBottom="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
