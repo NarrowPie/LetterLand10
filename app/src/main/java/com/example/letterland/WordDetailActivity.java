@@ -26,9 +26,6 @@ public class WordDetailActivity extends AppCompatActivity {
     private TextView tvWord;
     private ImageView ivPicture;
 
-    // ==========================================
-    // 📸 CAMERA & GALLERY LAUNCHERS FOR NEW IMAGE
-    // ==========================================
     private final ActivityResultLauncher<Void> takePictureLauncher = registerForActivityResult(
             new ActivityResultContracts.TakePicturePreview(),
             bitmap -> {
@@ -62,22 +59,18 @@ public class WordDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_word_detail);
 
-        // 🌟 SAFE VIEW BINDINGS
         ivPicture = findViewById(R.id.ivDetailPicture);
         tvWord = findViewById(R.id.tvDetailWord);
         View btnBack = findViewById(R.id.btnDetailBack);
         View btnSpeak = findViewById(R.id.btnSpeak);
 
-        // ALMANAC BUTTONS
         View layoutEditButtons = findViewById(R.id.layoutEditButtons);
         View btnRename = findViewById(R.id.btnDetailRename);
         View btnNewImage = findViewById(R.id.btnDetailNewImage);
         View btnDelete = findViewById(R.id.btnDetailDelete);
 
-        // SCANNER BUTTON
         View btnScanAgain = findViewById(R.id.btnScanAgain);
 
-        // WRITE MODE BUTTONS
         View llWriteControls = findViewById(R.id.llWriteControls);
         View btnWriteDelete = findViewById(R.id.btnWriteDelete);
         View btnWriteAgain = findViewById(R.id.btnWriteAgain);
@@ -90,9 +83,17 @@ public class WordDetailActivity extends AppCompatActivity {
         if (imagePath != null) ivPicture.setImageURI(Uri.parse(imagePath));
 
         // ==========================================
-        // 🌟 SMART VISIBILITY LOGIC
+        // 🌟 SMART VISIBILITY LOGIC (UPDATED!)
         // ==========================================
         if ("ALMANAC".equals(sourcePage)) {
+            // Child mode: Hide edit buttons!
+            if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
+            if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
+            if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.GONE);
+            if (btnSpeak != null) btnSpeak.setVisibility(View.VISIBLE);
+
+        } else if ("EDIT_ALMANAC".equals(sourcePage)) {
+            // Admin mode: Show edit buttons!
             if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
             if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.VISIBLE);
@@ -129,9 +130,6 @@ public class WordDetailActivity extends AppCompatActivity {
             });
         }
 
-        // ==========================================
-        // ✨ RENAME & IMAGE LOGIC
-        // ==========================================
         if (btnNewImage != null) {
             btnNewImage.setOnClickListener(v -> {
                 SoundManager.getInstance(this).playClick();
@@ -163,20 +161,19 @@ public class WordDetailActivity extends AppCompatActivity {
                                 new Thread(() -> {
                                     String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
 
-                                    // 🚀 NEW LOGIC: Check if the new name already exists BEFORE renaming!
                                     WordEntry checkExisting = AppDatabase.getInstance(this).wordDao().findWordForProfile(newName, player);
 
                                     if (checkExisting != null) {
-                                        // It already exists! Block the action and warn the user.
                                         runOnUiThread(() -> {
                                             Toast.makeText(this, "The word '" + newName + "' already exists! Please choose a different name.", Toast.LENGTH_LONG).show();
                                         });
                                     } else {
-                                        // It's safe to rename! Proceed as normal.
                                         WordEntry oldEntry = AppDatabase.getInstance(this).wordDao().findWordForProfile(wordText, player);
 
                                         if (oldEntry != null) {
                                             WordEntry newEntry = new WordEntry(newName, oldEntry.profileName, oldEntry.imagePath);
+                                            // Carry over the star rating too!
+                                            newEntry.isStarred = oldEntry.isStarred;
                                             AppDatabase.getInstance(this).wordDao().insert(newEntry);
                                             AppDatabase.getInstance(this).wordDao().delete(oldEntry);
 
@@ -195,21 +192,14 @@ public class WordDetailActivity extends AppCompatActivity {
             });
         }
 
-        // ==========================================
-        // 🌟 ROUTE BOTH DELETE BUTTONS TO THE CUSTOM DIALOG
-        // ==========================================
         if (btnDelete != null) btnDelete.setOnClickListener(v -> showCustomDeleteDialog());
         if (btnWriteDelete != null) btnWriteDelete.setOnClickListener(v -> showCustomDeleteDialog());
 
-        // Navigation
         if (btnScanAgain != null) btnScanAgain.setOnClickListener(v -> finish());
         if (btnWriteAgain != null) btnWriteAgain.setOnClickListener(v -> finish());
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
     }
 
-    // ==========================================
-    // 🌟 CUSTOM DELETE DIALOG FUNCTION
-    // ==========================================
     private void showCustomDeleteDialog() {
         SoundManager.getInstance(this).playClick();
 
@@ -236,9 +226,6 @@ public class WordDetailActivity extends AppCompatActivity {
         deleteDialog.show();
     }
 
-    // ==========================================
-    // 🗑️ DELETE DATA FUNCTION
-    // ==========================================
     private void deleteWordFromDatabase() {
         new Thread(() -> {
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
@@ -246,7 +233,6 @@ public class WordDetailActivity extends AppCompatActivity {
             WordEntry entry = AppDatabase.getInstance(this).wordDao().findWordForProfile(wordText, player);
             if (entry != null) {
                 AppDatabase.getInstance(this).wordDao().delete(entry);
-                // 🚀 Optional: If you want to track manual deletions inside the detail screen too:
                 AppDatabase.getInstance(this).logDao().insertLog(new LogEntry("DELETED WORD", "Word: " + entry.word + " (Profile: " + entry.profileName + ")", System.currentTimeMillis()));
             }
 
@@ -264,9 +250,6 @@ public class WordDetailActivity extends AppCompatActivity {
         }).start();
     }
 
-    // ==========================================
-    // 💾 SAVE NEW IMAGE TO DATABASE FUNCTION
-    // ==========================================
     private void updateImageInDatabase(Bitmap bitmap) {
         String fileName = "word_" + wordText + "_" + System.currentTimeMillis() + ".jpg";
         java.io.File file = new java.io.File(getExternalFilesDir(null), fileName);
@@ -277,14 +260,21 @@ public class WordDetailActivity extends AppCompatActivity {
 
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
 
-            WordEntry updatedEntry = new WordEntry(wordText, player, newImagePath);
-            AppDatabase.getInstance(this).wordDao().insert(updatedEntry);
+            // Check if the old word was starred to carry over the status
+            new Thread(() -> {
+                WordEntry oldEntry = AppDatabase.getInstance(this).wordDao().findWordForProfile(wordText, player);
+                boolean wasStarred = oldEntry != null && oldEntry.isStarred;
 
-            runOnUiThread(() -> {
-                imagePath = newImagePath;
-                ivPicture.setImageURI(Uri.parse(imagePath));
-                Toast.makeText(this, "Picture Updated!", Toast.LENGTH_SHORT).show();
-            });
+                WordEntry updatedEntry = new WordEntry(wordText, player, newImagePath);
+                updatedEntry.isStarred = wasStarred;
+                AppDatabase.getInstance(this).wordDao().insert(updatedEntry);
+
+                runOnUiThread(() -> {
+                    imagePath = newImagePath;
+                    ivPicture.setImageURI(Uri.parse(imagePath));
+                    Toast.makeText(this, "Picture Updated!", Toast.LENGTH_SHORT).show();
+                });
+            }).start();
 
         } catch (java.io.IOException e) {
             e.printStackTrace();

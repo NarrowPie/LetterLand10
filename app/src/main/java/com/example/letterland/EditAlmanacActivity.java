@@ -23,6 +23,13 @@ public class EditAlmanacActivity extends AppCompatActivity {
     private RecyclerView rvEditAlmanac;
     private EditWordAdapter adapter;
 
+    // 🌟 NEW: Added onResume so if an item is renamed or deleted, it updates automatically!
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadWordsFromDatabase();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,7 +105,8 @@ public class EditAlmanacActivity extends AppCompatActivity {
                 holder.ivStar.setImageResource(android.R.drawable.btn_star_big_off);
             }
 
-            holder.itemView.setOnClickListener(v -> {
+            // 🌟 1. TOGGLE STAR ONLY WHEN TAPPING THE STAR ICON
+            holder.ivStar.setOnClickListener(v -> {
                 SoundManager.getInstance(v.getContext()).playClick();
 
                 currentWord.isStarred = !currentWord.isStarred;
@@ -115,6 +123,19 @@ public class EditAlmanacActivity extends AppCompatActivity {
                         }
                     });
                 }).start();
+            });
+
+            // 🌟 2. OPEN DETAIL VIEW TO EDIT WHEN TAPPING THE REST OF THE CARD
+            holder.itemView.setOnClickListener(v -> {
+                SoundManager.getInstance(v.getContext()).playClick();
+                android.content.Intent intent = new android.content.Intent(v.getContext(), WordDetailActivity.class);
+                intent.putExtra("WORD_TEXT", currentWord.word);
+                intent.putExtra("IMAGE_PATH", currentWord.imagePath);
+
+                // This tells the detail screen to show the Admin Edit Buttons!
+                intent.putExtra("SOURCE_PAGE", "EDIT_ALMANAC");
+
+                v.getContext().startActivity(intent);
             });
         }
 

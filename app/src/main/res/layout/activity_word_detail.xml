@@ -25,52 +25,61 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardPicture"
-        android:layout_width="320dp"
-        android:layout_height="320dp"
-        android:layout_marginTop="16dp"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="8dp"
-        app:strokeColor="#4CAF50"
-        app:strokeWidth="6dp"
+    <LinearLayout
+        android:id="@+id/centerContentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/barrierBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnDetailBack">
 
-        <ImageView
-            android:id="@+id/ivDetailPicture"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop" />
-    </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardPicture"
+            android:layout_width="320dp"
+            android:layout_height="320dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="8dp"
+            app:strokeColor="#4CAF50"
+            app:strokeWidth="6dp">
 
-    <TextView
-        android:id="@+id/tvDetailWord"
+            <ImageView
+                android:id="@+id/ivDetailPicture"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvDetailWord"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:fontFamily="@font/kid_font"
+            android:text="WORD"
+            android:textColor="#000000"
+            android:textSize="48sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnSpeak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:src="@android:drawable/ic_btn_speak_now"
+            app:backgroundTint="#FFEB3B"
+            app:elevation="8dp"
+            app:fabSize="normal" />
+    </LinearLayout>
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrierBottom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="WORD"
-        android:textColor="#000000"
-        android:textSize="48sp"
-        android:textStyle="bold"
-        android:fontFamily="@font/kid_font"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardPicture" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnSpeak"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:src="@android:drawable/ic_btn_speak_now"
-        app:backgroundTint="#FFEB3B"
-        app:elevation="8dp"
-        app:fabSize="normal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvDetailWord" />
+        app:barrierDirection="top"
+        app:constraint_referenced_ids="layoutEditButtons,btnScanAgain,llWriteControls" />
 
     <LinearLayout
         android:id="@+id/layoutEditButtons"
@@ -92,9 +101,9 @@
             android:layout_height="60dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
+            android:fontFamily="@font/kid_font"
             android:text="Rename"
             android:textColor="#000000"
-            android:fontFamily="@font/kid_font"
             app:strokeColor="#000000" />
 
         <com.google.android.material.button.MaterialButton
@@ -104,9 +113,9 @@
             android:layout_height="60dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
+            android:fontFamily="@font/kid_font"
             android:text="Image"
             android:textColor="#2196F3"
-            android:fontFamily="@font/kid_font"
             app:strokeColor="#2196F3" />
 
         <com.google.android.material.button.MaterialButton
@@ -115,9 +124,9 @@
             android:layout_width="0dp"
             android:layout_height="60dp"
             android:layout_weight="1"
+            android:fontFamily="@font/kid_font"
             android:text="Delete"
             android:textColor="#F44336"
-            android:fontFamily="@font/kid_font"
             app:strokeColor="#F44336" />
     </LinearLayout>
 
@@ -126,32 +135,33 @@
         android:layout_width="250dp"
         android:layout_height="60dp"
         android:layout_marginBottom="32dp"
+        android:fontFamily="@font/kid_font"
         android:text="Scan Again"
         android:textSize="18sp"
-        android:fontFamily="@font/kid_font"
         app:backgroundTint="#4CAF50"
         app:cornerRadius="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
     <LinearLayout
         android:id="@+id/llWriteControls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_margin="16dp"
+        android:orientation="horizontal"
         android:visibility="gone"
         android:weightSum="2"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnWriteDelete"
             android:layout_width="0dp"
             android:layout_height="65dp"
-            android:layout_weight="1"
             android:layout_marginEnd="8dp"
+            android:layout_weight="1"
             android:text="DELETE"
             android:textSize="20sp"
             app:backgroundTint="#EF5350"
@@ -163,13 +173,11 @@
             android:id="@+id/btnWriteAgain"
             android:layout_width="0dp"
             android:layout_height="65dp"
-            android:layout_weight="1"
             android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:text="WRITE AGAIN"
             android:textSize="18sp"
             app:backgroundTint="#66BB6A"
             app:cornerRadius="12dp" />
-
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
