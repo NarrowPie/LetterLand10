@@ -70,6 +70,7 @@
             android:text="WORD"
             android:textColor="#000000"
             android:textStyle="bold"
+            android:includeFontPadding="false"
             app:autoSizeMaxTextSize="48sp"
             app:autoSizeMinTextSize="20sp"
             app:autoSizeTextType="uniform" />
@@ -91,7 +92,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="top"
-        app:constraint_referenced_ids="layoutEditButtons,btnScanAgain,llWriteControls" />
+        app:constraint_referenced_ids="layoutEditButtons,llScanControls,llWriteControls" />
 
     <LinearLayout
         android:id="@+id/layoutEditButtons"
@@ -103,7 +104,7 @@
         android:baselineAligned="false"
         android:orientation="horizontal"
         android:weightSum="3"
-        app:layout_constraintBottom_toTopOf="@+id/btnScanAgain"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
@@ -119,6 +120,7 @@
             android:padding="4dp"
             android:text="Rename"
             android:textColor="#000000"
+            android:includeFontPadding="false"
             app:autoSizeMaxTextSize="16sp"
             app:autoSizeMinTextSize="10sp"
             app:autoSizeTextType="uniform"
@@ -136,6 +138,7 @@
             android:padding="4dp"
             android:text="Image"
             android:textColor="#2196F3"
+            android:includeFontPadding="false"
             app:autoSizeMaxTextSize="16sp"
             app:autoSizeMinTextSize="10sp"
             app:autoSizeTextType="uniform"
@@ -152,31 +155,63 @@
             android:padding="4dp"
             android:text="Delete"
             android:textColor="#F44336"
+            android:includeFontPadding="false"
             app:autoSizeMaxTextSize="16sp"
             app:autoSizeMinTextSize="10sp"
             app:autoSizeTextType="uniform"
             app:strokeColor="#F44336" />
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnScanAgain"
-        android:layout_width="0dp"
-        android:layout_height="65dp"
-        android:layout_marginStart="48dp"
-        android:layout_marginEnd="48dp"
-        android:layout_marginBottom="32dp"
-        android:fontFamily="@font/kid_font"
-        android:maxLines="1"
-        android:text="Scan Again"
-        android:textColor="#FFFFFF"
-        app:autoSizeMaxTextSize="20sp"
-        app:autoSizeMinTextSize="12sp"
-        app:autoSizeTextType="uniform"
-        app:backgroundTint="#4CAF50"
-        app:cornerRadius="30dp"
+    <LinearLayout
+        android:id="@+id/llScanControls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:weightSum="2"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnScanDelete"
+            android:layout_width="0dp"
+            android:layout_height="70dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:fontFamily="@font/kid_font"
+            android:maxLines="1"
+            android:text="DELETE"
+            android:textColor="#FFFFFF"
+            android:includeFontPadding="false"
+            app:autoSizeMaxTextSize="20sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform"
+            app:backgroundTint="#EF5350"
+            app:cornerRadius="20dp"
+            app:icon="@android:drawable/ic_menu_delete"
+            app:iconGravity="textStart"
+            app:iconTint="#FFFFFF" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnScanAgain"
+            android:layout_width="0dp"
+            android:layout_height="70dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:fontFamily="@font/kid_font"
+            android:maxLines="1"
+            android:text="SCAN AGAIN"
+            android:textColor="#FFFFFF"
+            android:includeFontPadding="false"
+            app:autoSizeMaxTextSize="18sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform"
+            app:backgroundTint="#4CAF50"
+            app:cornerRadius="20dp" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/llWriteControls"
@@ -194,18 +229,19 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnWriteDelete"
             android:layout_width="0dp"
-            android:layout_height="65dp"
+            android:layout_height="70dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:fontFamily="@font/kid_font"
             android:maxLines="1"
             android:text="DELETE"
             android:textColor="#FFFFFF"
+            android:includeFontPadding="false"
             app:autoSizeMaxTextSize="20sp"
             app:autoSizeMinTextSize="10sp"
             app:autoSizeTextType="uniform"
             app:backgroundTint="#EF5350"
-            app:cornerRadius="12dp"
+            app:cornerRadius="20dp"
             app:icon="@android:drawable/ic_menu_delete"
             app:iconGravity="textStart"
             app:iconTint="#FFFFFF" />
@@ -213,17 +249,18 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnWriteAgain"
             android:layout_width="0dp"
-            android:layout_height="65dp"
+            android:layout_height="70dp"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:fontFamily="@font/kid_font"
             android:maxLines="1"
             android:text="WRITE AGAIN"
             android:textColor="#FFFFFF"
+            android:includeFontPadding="false"
             app:autoSizeMaxTextSize="18sp"
             app:autoSizeMinTextSize="10sp"
             app:autoSizeTextType="uniform"
             app:backgroundTint="#66BB6A"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="20dp" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

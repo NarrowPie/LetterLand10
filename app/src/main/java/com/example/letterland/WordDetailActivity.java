@@ -1,8 +1,6 @@
 package com.example.letterland;
 
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
@@ -25,7 +23,7 @@ import java.util.Locale;
 public class WordDetailActivity extends AppCompatActivity {
 
     private TextToSpeech textToSpeech;
-    private boolean isTtsReady = false;
+    private boolean isTtsReady = false; // TTS Fix flag
     private String wordText;
     private String imagePath;
     private TextView tvWord;
@@ -74,8 +72,12 @@ public class WordDetailActivity extends AppCompatActivity {
         View btnNewImage = findViewById(R.id.btnDetailNewImage);
         View btnDelete = findViewById(R.id.btnDetailDelete);
 
+        // Scan controls
+        View llScanControls = findViewById(R.id.llScanControls);
         View btnScanAgain = findViewById(R.id.btnScanAgain);
+        View btnScanDelete = findViewById(R.id.btnScanDelete);
 
+        // Write controls
         View llWriteControls = findViewById(R.id.llWriteControls);
         View btnWriteDelete = findViewById(R.id.btnWriteDelete);
         View btnWriteAgain = findViewById(R.id.btnWriteAgain);
@@ -87,35 +89,45 @@ public class WordDetailActivity extends AppCompatActivity {
         if (wordText != null) tvWord.setText(wordText);
         if (imagePath != null) ivPicture.setImageURI(Uri.parse(imagePath));
 
+        // ==========================================
+        // 🌟 SMART VISIBILITY LOGIC
+        // ==========================================
         if ("ALMANAC".equals(sourcePage)) {
-            if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
+            // Child mode: Hide edit buttons!
+            if (llScanControls != null) llScanControls.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
             if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.GONE);
             if (btnSpeak != null) btnSpeak.setVisibility(View.VISIBLE);
 
         } else if ("EDIT_ALMANAC".equals(sourcePage)) {
-            if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
+            // Admin mode: Show edit buttons!
+            if (llScanControls != null) llScanControls.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
             if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.VISIBLE);
             if (btnSpeak != null) btnSpeak.setVisibility(View.VISIBLE);
 
         } else if ("SCANNER".equals(sourcePage)) {
+            // Scan mode: Show Scan Controls!
             if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
-            if (btnScanAgain != null) btnScanAgain.setVisibility(View.VISIBLE);
+            if (llScanControls != null) llScanControls.setVisibility(View.VISIBLE);
+            if (btnSpeak != null) btnSpeak.setVisibility(View.VISIBLE);
 
         } else if ("WRITE".equals(sourcePage)) {
             if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.GONE);
-            if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
+            if (llScanControls != null) llScanControls.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.VISIBLE);
             if (btnSpeak != null) btnSpeak.setVisibility(View.VISIBLE);
 
         } else {
-            if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
+            if (llScanControls != null) llScanControls.setVisibility(View.GONE);
             if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
         }
 
+        // ==========================================
+        // 🚀 TTS Fix (from previous session)
+        // ==========================================
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 int result = textToSpeech.setLanguage(Locale.US);
@@ -213,9 +225,12 @@ public class WordDetailActivity extends AppCompatActivity {
             });
         }
 
+        // Handle Delete Routing safely to your database deletion method
         if (btnDelete != null) btnDelete.setOnClickListener(v -> showCustomDeleteDialog());
         if (btnWriteDelete != null) btnWriteDelete.setOnClickListener(v -> showCustomDeleteDialog());
+        if (btnScanDelete != null) btnScanDelete.setOnClickListener(v -> showCustomDeleteDialog());
 
+        // Handle Back/Again functions
         if (btnScanAgain != null) btnScanAgain.setOnClickListener(v -> finish());
         if (btnWriteAgain != null) btnWriteAgain.setOnClickListener(v -> finish());
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
@@ -276,14 +291,7 @@ public class WordDetailActivity extends AppCompatActivity {
         java.io.File file = new java.io.File(getExternalFilesDir(null), fileName);
 
         try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
-
-            // 🚀 FIX FOR BLACK IMAGES: Force a white background underneath
-            Bitmap fixedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(fixedBitmap);
-            canvas.drawColor(Color.WHITE);
-            canvas.drawBitmap(bitmap, 0, 0, null);
-
-            fixedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
             String newImagePath = file.getAbsolutePath();
 
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
