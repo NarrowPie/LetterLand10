@@ -1,6 +1,8 @@
 package com.example.letterland;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -85,8 +87,8 @@ public class AddObjectActivity extends AppCompatActivity {
         });
     }
 
-    // 🚀 NEW: Method to safely scale down images while maintaining aspect ratio
-    private Bitmap getResizedBitmap(Bitmap image, int maxSize) {
+    // 🚀 NEW & IMPROVED: Safely scale down images AND fix black background issues!
+    private Bitmap getResizedAndFixedBitmap(Bitmap image, int maxSize) {
         int width = image.getWidth();
         int height = image.getHeight();
 
@@ -98,7 +100,16 @@ public class AddObjectActivity extends AppCompatActivity {
             height = maxSize;
             width = (int) (height * bitmapRatio);
         }
-        return Bitmap.createScaledBitmap(image, width, height, true);
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(image, width, height, true);
+
+        // 🚀 BLACK IMAGE FIX: Create a fresh software-backed bitmap with a white background.
+        // This stops transparent PNGs from turning black and fixes hardware-buffer camera bugs.
+        Bitmap finalBitmap = Bitmap.createBitmap(scaledBitmap.getWidth(), scaledBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(finalBitmap);
+        canvas.drawColor(Color.WHITE); // Force white background
+        canvas.drawBitmap(scaledBitmap, 0, 0, null);
+
+        return finalBitmap;
     }
 
     private void saveObjectToDatabase() {
@@ -115,35 +126,31 @@ public class AddObjectActivity extends AppCompatActivity {
         }
 
         new Thread(() -> {
-            // Get the current student's profile so the word is saved for them
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
 
-            // Check if this word already exists to prevent duplicates
             WordEntry existingWord = AppDatabase.getInstance(this).wordDao().findWordForProfile(word, player);
             if (existingWord != null) {
                 runOnUiThread(() -> Toast.makeText(this, "This word already exists in the Almanac!", Toast.LENGTH_SHORT).show());
                 return;
             }
 
-            // Save the image safely to the app's internal storage
             String fileName = "word_" + word + "_" + System.currentTimeMillis() + ".jpg";
             File file = new File(getExternalFilesDir(null), fileName);
 
             try (FileOutputStream out = new FileOutputStream(file)) {
 
-                // 🚀 STORAGE FIX: Shrink the image to a max of 800px before saving
-                Bitmap resizedBitmap = getResizedBitmap(selectedBitmap, 800);
+                // 🚀 STORAGE FIX: Shrink the image and apply the anti-black-background fix
+                Bitmap fixedBitmap = getResizedAndFixedBitmap(selectedBitmap, 800);
 
-                // 🚀 STORAGE FIX: Compress at 80% quality instead of 90%
-                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
+                // 🚀 STORAGE FIX: Compress at 80% quality
+                fixedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
 
-                // Insert the new word and image path into the Database!
                 WordEntry newEntry = new WordEntry(word, player, file.getAbsolutePath());
                 AppDatabase.getInstance(this).wordDao().insert(newEntry);
 
                 runOnUiThread(() -> {
                     Toast.makeText(this, word + " successfully added to Almanac!", Toast.LENGTH_LONG).show();
-                    finish(); // Go back to the Admin Panel automatically
+                    finish();
                 });
 
             } catch (IOException e) {

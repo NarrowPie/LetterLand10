@@ -1,6 +1,8 @@
 package com.example.letterland;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
@@ -23,7 +25,7 @@ import java.util.Locale;
 public class WordDetailActivity extends AppCompatActivity {
 
     private TextToSpeech textToSpeech;
-    private boolean isTtsReady = false; // 🚀 FIX: Safety flag to prevent spamming while loading
+    private boolean isTtsReady = false;
     private String wordText;
     private String imagePath;
     private TextView tvWord;
@@ -85,9 +87,6 @@ public class WordDetailActivity extends AppCompatActivity {
         if (wordText != null) tvWord.setText(wordText);
         if (imagePath != null) ivPicture.setImageURI(Uri.parse(imagePath));
 
-        // ==========================================
-        // 🌟 SMART VISIBILITY LOGIC
-        // ==========================================
         if ("ALMANAC".equals(sourcePage)) {
             if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
@@ -117,28 +116,25 @@ public class WordDetailActivity extends AppCompatActivity {
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
         }
 
-        // 🚀 FIX: Proper TTS Initialization
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 int result = textToSpeech.setLanguage(Locale.US);
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                     runOnUiThread(() -> Toast.makeText(this, "Language not supported for voice.", Toast.LENGTH_SHORT).show());
                 } else {
-                    isTtsReady = true; // Mark as ready only when fully loaded!
+                    isTtsReady = true;
                 }
             }
         });
 
         if (btnSpeak != null) {
             btnSpeak.setOnClickListener(v -> {
-                // 🚀 FIX: Prevent queue backups if the user clicks too fast
                 if (!isTtsReady) {
                     Toast.makeText(this, "Voice is loading, please wait...", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 if (wordText != null) {
-                    // 🚀 FIX: Assign Audio Attributes so TTS forces its way over Background Music
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         AudioAttributes audioAttributes = new AudioAttributes.Builder()
                                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
@@ -280,7 +276,14 @@ public class WordDetailActivity extends AppCompatActivity {
         java.io.File file = new java.io.File(getExternalFilesDir(null), fileName);
 
         try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+
+            // 🚀 FIX FOR BLACK IMAGES: Force a white background underneath
+            Bitmap fixedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(fixedBitmap);
+            canvas.drawColor(Color.WHITE);
+            canvas.drawBitmap(bitmap, 0, 0, null);
+
+            fixedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
             String newImagePath = file.getAbsolutePath();
 
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");

@@ -1,6 +1,8 @@
 package com.example.letterland;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -89,7 +91,6 @@ public class WriteActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        // ✏️ UPDATE: Trigger the sound when drawing starts, stop when finished!
         drawingView.setOnDrawListener(new DrawingView.OnDrawListener() {
             @Override
             public void onDrawStarted() {
@@ -133,7 +134,6 @@ public class WriteActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         SoundManager.getInstance(this).pauseBackgroundMusic();
-        // ✏️ Safety catch: stop scratching if the app is minimized while drawing
         SoundManager.getInstance(this).stopScratchSound();
     }
 
@@ -238,7 +238,14 @@ public class WriteActivity extends AppCompatActivity {
         java.io.File file = new java.io.File(getExternalFilesDir(null), fileName);
 
         try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+
+            // 🚀 FIX FOR BLACK IMAGES: Force a white background underneath
+            Bitmap fixedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(fixedBitmap);
+            canvas.drawColor(Color.WHITE);
+            canvas.drawBitmap(bitmap, 0, 0, null);
+
+            fixedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
 
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
             WordEntry newEntry = new WordEntry(word, player, file.getAbsolutePath());

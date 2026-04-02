@@ -194,11 +194,11 @@ public class QuizActivity extends AppCompatActivity {
 
             if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
 
-                // 🚀 FIX: Prevent Android 14+ GPU Black Screen Crash
-                // Removed CrossFade and forced dontAnimate() so the rounded MaterialCardView doesn't crash the hardware buffer
+                // 🚀 THE FINAL FIX: Force Glide to down-scale the massive camera image
+                // to 250x250 pixels before sending it to the GPU.
                 Glide.with(this)
                         .load(currentWord.imagePath)
-                        .dontAnimate() // Absolutely no transitions
+                        .override(250, 250) // Stops the GPU out-of-memory crash!
                         .centerCrop()
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .error(R.drawable.title_logo)
@@ -231,10 +231,10 @@ public class QuizActivity extends AppCompatActivity {
 
         if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
 
-            // 🚀 FIX: Apply the exact same safety loading here
+            // 🚀 Force a safe size for the full-screen popup as well
             Glide.with(zoomDialog.getContext())
                     .load(currentWord.imagePath)
-                    .dontAnimate()
+                    .override(800, 800)
                     .fitCenter()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .error(R.drawable.title_logo)
