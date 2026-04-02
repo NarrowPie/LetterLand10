@@ -22,9 +22,11 @@
 
         <activity
             android:name=".AlmanacActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".PlayActivity"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name=".QuizRecordActivity"
@@ -34,31 +36,46 @@
             android:name=".WriteActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
-        <activity android:name=".QuizActivity" android:screenOrientation="portrait" />
-        <activity android:name=".QuizResultActivity" android:screenOrientation="portrait" />
+        <activity
+            android:name=".QuizActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".QuizResultActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".WordDetailActivity"
+            android:screenOrientation="portrait" />
 
         <activity
-            android:name=".WordDetailActivity" />
-        <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ProfilesActivity" />
+
+        <activity
+            android:name=".ProfilesActivity"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".AddObjectActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
-
-        <activity android:name=".AdminActivity" android:screenOrientation="portrait" />
-        <activity android:name=".UserLogsActivity" android:screenOrientation="portrait" />
-
-        <activity android:name=".DeletedLogsActivity" android:screenOrientation="portrait" />
-
-        <activity android:name=".EditAlmanacActivity" android:screenOrientation="portrait" android:exported="false" />
+        <activity
+            android:name=".AdminActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".UserLogsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".DeletedLogsActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".EditAlmanacActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -71,12 +88,5 @@
         </provider>
 
     </application>
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.TTS_SERVICE" />
-        </intent>
-    </queries>
-
-
 
 </manifest>
