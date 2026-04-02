@@ -21,6 +21,10 @@ public interface WordDao {
     @Query("SELECT * FROM word_table WHERE profileName = :playerName ORDER BY rowid DESC")
     List<WordEntry> getAllWordsForProfile(String playerName);
 
+    // 🚀 NEW: ONLY grab the starred pictures for the Quiz!
+    @Query("SELECT * FROM word_table WHERE profileName = :playerName AND isStarred = 1 ORDER BY rowid DESC")
+    List<WordEntry> getStarredWordsForProfile(String playerName);
+
     // Grab absolutely everything in the database! (NEWEST AT THE TOP)
     @Query("SELECT * FROM word_table ORDER BY rowid DESC")
     List<WordEntry> getAllWords();

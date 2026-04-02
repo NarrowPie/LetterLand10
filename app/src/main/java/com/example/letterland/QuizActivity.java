@@ -126,23 +126,24 @@ public class QuizActivity extends AppCompatActivity {
 
         new Thread(() -> {
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
-            List<WordEntry> allWords = AppDatabase.getInstance(this).wordDao().getAllWordsForProfile(player);
+
+            // 🚀 CRITICAL FIX: Only pull STARRED words!
+            List<WordEntry> quizReadyWords = AppDatabase.getInstance(this).wordDao().getStarredWordsForProfile(player);
 
             runOnUiThread(() -> {
-                // 🚀 CRITICAL FIX: Check if active
                 if (isFinishing() || isDestroyed()) return;
 
-                if (allWords.size() < 10) {
+                if (quizReadyWords.size() < 10) {
                     new AlertDialog.Builder(QuizActivity.this)
-                            .setTitle("Not Enough Words")
-                            .setMessage("Profile '" + player + "' only has " + allWords.size() + " words saved.\nYou need at least 10 items in your Almanac to play Quiz Mode!")
+                            .setTitle("Not Enough Starred Words")
+                            .setMessage("Profile '" + player + "' only has " + quizReadyWords.size() + " approved words.\nYou need at least 10 STARRED items to play Quiz Mode!\n\nGo to Admin Panel -> Edit Almanac to star items.")
                             .setPositiveButton("OK", (dialog, which) -> finish())
                             .setCancelable(false)
                             .show();
                 } else {
-                    Collections.shuffle(allWords);
-                    int limit = Math.min(allWords.size(), 10);
-                    quizWords = allWords.subList(0, limit);
+                    Collections.shuffle(quizReadyWords);
+                    int limit = Math.min(quizReadyWords.size(), 10);
+                    quizWords = quizReadyWords.subList(0, limit);
                     loadCurrentQuestion();
                 }
             });
@@ -261,7 +262,6 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void goToResults() {
-        // 🚀 CRITICAL FIX: Ensure no delayed scans fire after moving to results!
         if (scanRunnable != null) scanHandler.removeCallbacks(scanRunnable);
 
         int score = 0;
@@ -298,7 +298,6 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void performScan() {
-        // 🚀 CRITICAL FIX: Abort if activity is closing to prevent crash
         if (isFinishing() || isDestroyed()) return;
 
         if (recognizer == null) {
@@ -311,7 +310,7 @@ public class QuizActivity extends AppCompatActivity {
 
         recognizer.recognize(ink)
                 .addOnSuccessListener(result -> {
-                    if (isFinishing() || isDestroyed()) return; // Extra safety
+                    if (isFinishing() || isDestroyed()) return;
                     if (!result.getCandidates().isEmpty()) {
                         String cleanWord = result.getCandidates().get(0).getText().toUpperCase().trim();
 
@@ -329,7 +328,6 @@ public class QuizActivity extends AppCompatActivity {
                 });
     }
 
-    // 🚀 CRITICAL FIX: Clean up handlers when exiting to stop background crashes
     @Override
     protected void onDestroy() {
         super.onDestroy();

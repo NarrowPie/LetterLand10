@@ -58,6 +58,8 @@
 
         <activity android:name=".DeletedLogsActivity" android:screenOrientation="portrait" />
 
+        <activity android:name=".EditAlmanacActivity" android:screenOrientation="portrait" android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

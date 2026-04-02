@@ -22,6 +22,9 @@ public class WordEntry {
 
     public String imagePath;
 
+    // 🚀 NEW: Tracks if the item is approved/starred for the Quiz!
+    public boolean isStarred = false;
+
     // This tracks if the checkbox is checked in the Admin panel!
     // @Ignore means the database won't try to save this, it's just for the UI.
     @Ignore

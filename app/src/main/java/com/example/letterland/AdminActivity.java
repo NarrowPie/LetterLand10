@@ -19,7 +19,8 @@ public class AdminActivity extends AppCompatActivity {
     private MaterialButton btnAdminQuizRecord;
     private MaterialButton btnAdminAddObject;
     private MaterialButton btnAdminDeletedLogs;
-    private MaterialButton btnResetPin; // 🚀 NEW BUTTON
+    private MaterialButton btnAdminEditAlmanac; // 🚀 NEW BUTTON
+    private MaterialButton btnResetPin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +33,8 @@ public class AdminActivity extends AppCompatActivity {
         btnAdminQuizRecord = findViewById(R.id.btnAdminQuizRecord);
         btnAdminAddObject = findViewById(R.id.btnAdminAddObject);
         btnAdminDeletedLogs = findViewById(R.id.btnAdminDeletedLogs);
-        btnResetPin = findViewById(R.id.btnResetPin); // 🚀 LINK NEW BUTTON
+        btnAdminEditAlmanac = findViewById(R.id.btnAdminEditAlmanac); // 🚀 LINK NEW BUTTON
+        btnResetPin = findViewById(R.id.btnResetPin);
 
         // Back Button
         btnAdminBack.setOnClickListener(v -> {
@@ -64,14 +66,19 @@ public class AdminActivity extends AppCompatActivity {
             startActivity(new Intent(AdminActivity.this, DeletedLogsActivity.class));
         });
 
-        // 5. RESET PIN LOGIC (🚀 NEW LISTENER)
+        // 5. OPEN EDIT ALMANAC SCREEN (STAR SYSTEM)
+        btnAdminEditAlmanac.setOnClickListener(v -> {
+            SoundManager.getInstance(this).playClick();
+            startActivity(new Intent(AdminActivity.this, EditAlmanacActivity.class));
+        });
+
+        // 6. RESET PIN LOGIC
         btnResetPin.setOnClickListener(v -> {
             SoundManager.getInstance(this).playClick();
             showResetPinDialog();
         });
     }
 
-    // 🚀 NEW METHOD TO HANDLE PIN CHANGING
     private void showResetPinDialog() {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_reset_pin, null);
         AlertDialog pinDialog = new AlertDialog.Builder(this)
@@ -96,7 +103,6 @@ public class AdminActivity extends AppCompatActivity {
             String currentEntered = etCurrentPin.getText().toString();
             String newPinEntered = etNewPin.getText().toString();
 
-            // Get the actual saved PIN from memory (defaults to 1234)
             SharedPreferences prefs = getSharedPreferences("LetterLandMemory", MODE_PRIVATE);
             String savedPin = prefs.getString("ADMIN_PIN", "1234");
 
@@ -105,7 +111,6 @@ public class AdminActivity extends AppCompatActivity {
             } else if (newPinEntered.length() < 4) {
                 Toast.makeText(this, "New PIN must be 4 digits!", Toast.LENGTH_SHORT).show();
             } else {
-                // Pin is correct and valid! Save the new one!
                 prefs.edit().putString("ADMIN_PIN", newPinEntered).apply();
                 Toast.makeText(this, "PIN successfully updated!", Toast.LENGTH_SHORT).show();
                 pinDialog.dismiss();
