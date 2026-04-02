@@ -1,7 +1,9 @@
 package com.example.letterland;
 
 import android.graphics.Bitmap;
+import android.media.AudioAttributes;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
@@ -21,6 +23,7 @@ import java.util.Locale;
 public class WordDetailActivity extends AppCompatActivity {
 
     private TextToSpeech textToSpeech;
+    private boolean isTtsReady = false; // 🚀 FIX: Safety flag to prevent spamming while loading
     private String wordText;
     private String imagePath;
     private TextView tvWord;
@@ -83,17 +86,15 @@ public class WordDetailActivity extends AppCompatActivity {
         if (imagePath != null) ivPicture.setImageURI(Uri.parse(imagePath));
 
         // ==========================================
-        // 🌟 SMART VISIBILITY LOGIC (UPDATED!)
+        // 🌟 SMART VISIBILITY LOGIC
         // ==========================================
         if ("ALMANAC".equals(sourcePage)) {
-            // Child mode: Hide edit buttons!
             if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
             if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.GONE);
             if (btnSpeak != null) btnSpeak.setVisibility(View.VISIBLE);
 
         } else if ("EDIT_ALMANAC".equals(sourcePage)) {
-            // Admin mode: Show edit buttons!
             if (btnScanAgain != null) btnScanAgain.setVisibility(View.GONE);
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
             if (layoutEditButtons != null) layoutEditButtons.setVisibility(View.VISIBLE);
@@ -116,16 +117,41 @@ public class WordDetailActivity extends AppCompatActivity {
             if (llWriteControls != null) llWriteControls.setVisibility(View.GONE);
         }
 
+        // 🚀 FIX: Proper TTS Initialization
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
-                textToSpeech.setLanguage(Locale.US);
+                int result = textToSpeech.setLanguage(Locale.US);
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    runOnUiThread(() -> Toast.makeText(this, "Language not supported for voice.", Toast.LENGTH_SHORT).show());
+                } else {
+                    isTtsReady = true; // Mark as ready only when fully loaded!
+                }
             }
         });
 
         if (btnSpeak != null) {
             btnSpeak.setOnClickListener(v -> {
+                // 🚀 FIX: Prevent queue backups if the user clicks too fast
+                if (!isTtsReady) {
+                    Toast.makeText(this, "Voice is loading, please wait...", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 if (wordText != null) {
-                    textToSpeech.speak(wordText, TextToSpeech.QUEUE_FLUSH, null, null);
+                    // 🚀 FIX: Assign Audio Attributes so TTS forces its way over Background Music
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build();
+                        textToSpeech.setAudioAttributes(audioAttributes);
+
+                        Bundle params = new Bundle();
+                        params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
+                        textToSpeech.speak(wordText, TextToSpeech.QUEUE_FLUSH, params, "TTS_ID_1");
+                    } else {
+                        textToSpeech.speak(wordText, TextToSpeech.QUEUE_FLUSH, null, "TTS_ID_1");
+                    }
                 }
             });
         }
@@ -172,7 +198,6 @@ public class WordDetailActivity extends AppCompatActivity {
 
                                         if (oldEntry != null) {
                                             WordEntry newEntry = new WordEntry(newName, oldEntry.profileName, oldEntry.imagePath);
-                                            // Carry over the star rating too!
                                             newEntry.isStarred = oldEntry.isStarred;
                                             AppDatabase.getInstance(this).wordDao().insert(newEntry);
                                             AppDatabase.getInstance(this).wordDao().delete(oldEntry);
@@ -260,7 +285,6 @@ public class WordDetailActivity extends AppCompatActivity {
 
             String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
 
-            // Check if the old word was starred to carry over the status
             new Thread(() -> {
                 WordEntry oldEntry = AppDatabase.getInstance(this).wordDao().findWordForProfile(wordText, player);
                 boolean wasStarred = oldEntry != null && oldEntry.isStarred;
