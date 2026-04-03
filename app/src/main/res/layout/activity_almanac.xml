@@ -8,39 +8,34 @@
 
     <ImageButton
         android:id="@+id/btnBackAlmanac"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="16dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:scaleType="fitCenter"
         android:src="@android:drawable/ic_menu_revert"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="#000000" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tvAlmanacTitle"
+        android:id="@+id/tvTitleAlmanac"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginHorizontal="8dp"
         android:fontFamily="@font/kid_font"
         android:gravity="center"
-        android:text="ALMANAC"
-        android:textColor="#4CAF50"
-        android:textSize="36sp"
-        android:includeFontPadding="false"
-        app:layout_constraintEnd_toStartOf="@+id/btnFilterStarred"
-        app:layout_constraintStart_toEndOf="@+id/btnBackAlmanac"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:text="MY ALMANAC"
+        android:textColor="#2196F3"
+        android:textSize="28sp"
+        app:layout_constraintBottom_toBottomOf="@id/btnBackAlmanac"
+        app:layout_constraintEnd_toStartOf="@id/btnFilterStarred"
+        app:layout_constraintStart_toEndOf="@id/btnBackAlmanac"
+        app:layout_constraintTop_toTopOf="@id/btnBackAlmanac" />
 
     <ImageButton
         android:id="@+id/btnFilterStarred"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="16dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:scaleType="fitCenter"
         android:src="@android:drawable/btn_star_big_off"
@@ -49,15 +44,12 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAlmanac"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:clipToPadding="false"
-        android:padding="12dp"
-        android:paddingBottom="32dp"
+        android:paddingBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvAlmanacTitle" />
+        app:layout_constraintTop_toBottomOf="@id/btnBackAlmanac" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

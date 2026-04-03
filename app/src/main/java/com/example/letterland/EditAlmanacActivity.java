@@ -1,10 +1,14 @@
 package com.example.letterland;
 
+import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -15,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +29,12 @@ public class EditAlmanacActivity extends AppCompatActivity {
     private RecyclerView rvEditAlmanac;
     private EditWordAdapter adapter;
 
-    // 🌟 TRACK FILTER STATE
+    // TRACK FILTER STATE
     private boolean isShowingStarredOnly = false;
+
+    // NEW CONTROLS
+    private CheckBox cbSelectAll;
+    private View btnDeleteSelected;
 
     @Override
     protected void onResume() {
@@ -35,74 +45,201 @@ public class EditAlmanacActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_almanac);
+
+        // Points to the dedicated Admin layout
+        setContentView(R.layout.activity_edit_almanac);
 
         rvEditAlmanac = findViewById(R.id.rvAlmanac);
-        ImageButton btnBack = findViewById(R.id.btnBackAlmanac);
-        ImageButton btnFilterStarred = findViewById(R.id.btnFilterStarred); // 🌟 LINK BUTTON
+        View btnBack = findViewById(R.id.btnBackAlmanac);
+        ImageButton btnFilterStarred = findViewById(R.id.btnFilterStarred);
 
-        TextView tvTitle = findViewById(R.id.tvAlmanacTitle);
-        if(tvTitle != null) {
-            tvTitle.setText("SELECT QUIZ WORDS");
-            tvTitle.setTextColor(0xFF3F51B5);
-        }
+        cbSelectAll = findViewById(R.id.cbSelectAll);
+        btnDeleteSelected = findViewById(R.id.btnDeleteSelected);
 
         btnBack.setOnClickListener(v -> {
             SoundManager.getInstance(this).playClick();
             finish();
         });
 
-        // 🌟 FILTER BUTTON LOGIC
         btnFilterStarred.setOnClickListener(v -> {
             SoundManager.getInstance(this).playClick();
             isShowingStarredOnly = !isShowingStarredOnly;
-
             if (isShowingStarredOnly) {
                 btnFilterStarred.setImageResource(android.R.drawable.btn_star_big_on);
+                Toast.makeText(this, "Showing Quiz Words Only", Toast.LENGTH_SHORT).show();
             } else {
                 btnFilterStarred.setImageResource(android.R.drawable.btn_star_big_off);
+                Toast.makeText(this, "Showing All Words", Toast.LENGTH_SHORT).show();
             }
-
             loadWordsFromDatabase();
         });
 
-        int screenWidthDp = getResources().getConfiguration().screenWidthDp;
-        int columns = Math.max(2, screenWidthDp / 160);
-
-        rvEditAlmanac.setLayoutManager(new GridLayoutManager(this, columns));
+        rvEditAlmanac.setLayoutManager(new GridLayoutManager(this, 3));
         adapter = new EditWordAdapter(new ArrayList<>());
         rvEditAlmanac.setAdapter(adapter);
 
-        loadWordsFromDatabase();
+        // SELECT ALL CHECKBOX LISTENER
+        cbSelectAll.setOnClickListener(v -> {
+            if (adapter != null) {
+                adapter.selectAll(cbSelectAll.isChecked());
+            }
+        });
+
+        // DELETE BUTTON LISTENER WITH CUSTOM DIALOG
+        btnDeleteSelected.setOnClickListener(v -> {
+            if (adapter != null) {
+                List<WordEntry> itemsToDelete = adapter.getSelectedWords();
+                if (itemsToDelete.isEmpty()) {
+                    Toast.makeText(this, "No items selected!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // SHOW THE CUSTOM CONFIRMATION DIALOG BEFORE DELETING!
+                showDeleteConfirmationDialog(() -> {
+
+                    // --- This code ONLY runs if they click "Yes, Delete!" ---
+                    new Thread(() -> {
+                        AppDatabase db = AppDatabase.getInstance(this);
+                        for (WordEntry word : itemsToDelete) {
+
+                            // 1. Delete from Database
+                            db.wordDao().delete(word);
+
+                            // 2. Add to History Logs!
+                            db.logDao().insertLog(new LogEntry("DELETED ALMANAC WORD", "Word: " + word.word, System.currentTimeMillis()));
+
+                            // 3. Delete physical image file to save phone space
+                            if (word.imagePath != null) {
+                                try {
+                                    java.io.File file = new java.io.File(android.net.Uri.parse(word.imagePath).getPath());
+                                    if (file.exists()) {
+                                        file.delete();
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, itemsToDelete.size() + " item(s) deleted!", Toast.LENGTH_SHORT).show();
+                            cbSelectAll.setChecked(false);
+                            loadWordsFromDatabase(); // Refresh the list
+                        });
+                    }).start();
+                    // --------------------------------------------------------
+
+                });
+            }
+        });
+    }
+
+    // --- CUSTOM DIALOG METHOD ---
+    private void showDeleteConfirmationDialog(Runnable onConfirm) {
+        // 1. Create the custom dialog
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_delete);
+
+        // 2. Make the background transparent so your rounded MaterialCardView corners show perfectly!
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+
+        // 3. Link the buttons from your XML
+        MaterialButton btnConfirmDelete = dialog.findViewById(R.id.btnConfirmDelete);
+        MaterialButton btnCancelDelete = dialog.findViewById(R.id.btnCancelDelete);
+
+        // 4. Handle "Cancel"
+        btnCancelDelete.setOnClickListener(v -> {
+            SoundManager.getInstance(this).playClick();
+            dialog.dismiss(); // Just close the popup
+        });
+
+        // 5. Handle "Yes, Delete!"
+        btnConfirmDelete.setOnClickListener(v -> {
+            SoundManager.getInstance(this).playClick();
+            dialog.dismiss(); // Close the popup
+
+            // Run the actual deletion code that was passed into this method
+            if (onConfirm != null) {
+                onConfirm.run();
+            }
+        });
+
+        // 6. Show it to the user
+        dialog.show();
     }
 
     private void loadWordsFromDatabase() {
         new Thread(() -> {
-            String player = getSharedPreferences("LetterLandMemory", MODE_PRIVATE).getString("ACTIVE_PROFILE", "Default");
+            AppDatabase db = AppDatabase.getInstance(this);
+            // Grab all words using your existing Dao function
+            List<WordEntry> allWords = db.wordDao().getAllWords();
+            List<WordEntry> displayWords = new ArrayList<>();
 
-            List<WordEntry> myWords;
+            // Filter them in Java so we don't have to add new Dao functions!
             if (isShowingStarredOnly) {
-                // 🌟 GET ONLY STARRED WORDS
-                myWords = AppDatabase.getInstance(this).wordDao().getStarredWordsForProfile(player);
+                for (WordEntry word : allWords) {
+                    if (word.isStarred) {
+                        displayWords.add(word);
+                    }
+                }
             } else {
-                // 🌟 GET ALL WORDS
-                myWords = AppDatabase.getInstance(this).wordDao().getAllWordsForProfile(player);
+                displayWords.addAll(allWords);
             }
 
-            runOnUiThread(() -> adapter.updateData(myWords));
+            runOnUiThread(() -> {
+                adapter.updateWords(displayWords);
+            });
         }).start();
     }
 
-    private class EditWordAdapter extends RecyclerView.Adapter<EditWordAdapter.WordViewHolder> {
+    // --- INNER ADAPTER CLASS ---
+    class EditWordAdapter extends RecyclerView.Adapter<EditWordAdapter.WordViewHolder> {
         private List<WordEntry> words;
 
         public EditWordAdapter(List<WordEntry> words) {
             this.words = words;
         }
 
-        public void updateData(List<WordEntry> newWords) {
+        public void updateWords(List<WordEntry> newWords) {
             this.words = newWords;
+            updateSelectAllCheckboxState();
             notifyDataSetChanged();
+        }
+
+        public void selectAll(boolean isSelected) {
+            for (WordEntry word : words) {
+                word.isSelected = isSelected;
+            }
+            notifyDataSetChanged();
+        }
+
+        public List<WordEntry> getSelectedWords() {
+            List<WordEntry> selected = new ArrayList<>();
+            for (WordEntry word : words) {
+                if (word.isSelected) {
+                    selected.add(word);
+                }
+            }
+            return selected;
+        }
+
+        private void updateSelectAllCheckboxState() {
+            if (cbSelectAll != null) {
+                boolean allSelected = !words.isEmpty();
+                for (WordEntry w : words) {
+                    if (!w.isSelected) {
+                        allSelected = false;
+                        break;
+                    }
+                }
+                cbSelectAll.setChecked(allSelected);
+            }
         }
 
         @NonNull
@@ -117,10 +254,10 @@ public class EditAlmanacActivity extends AppCompatActivity {
             WordEntry currentWord = words.get(position);
             holder.tvWord.setText(currentWord.word);
 
-            try {
+            if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
                 holder.ivImage.setImageURI(Uri.parse(currentWord.imagePath));
-            } catch (Exception e) {
-                e.printStackTrace();
+            } else {
+                holder.ivImage.setImageResource(R.drawable.admin_pic);
             }
 
             if (currentWord.isStarred) {
@@ -131,15 +268,14 @@ public class EditAlmanacActivity extends AppCompatActivity {
 
             holder.ivStar.setOnClickListener(v -> {
                 SoundManager.getInstance(v.getContext()).playClick();
-
-                currentWord.isStarred = !currentWord.isStarred;
+                boolean newState = !currentWord.isStarred;
+                currentWord.isStarred = newState;
 
                 new Thread(() -> {
                     AppDatabase.getInstance(v.getContext()).wordDao().update(currentWord);
-
                     runOnUiThread(() -> {
                         notifyItemChanged(position);
-                        if(currentWord.isStarred) {
+                        if (newState) {
                             Toast.makeText(v.getContext(), currentWord.word + " added to Quiz!", Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(v.getContext(), currentWord.word + " removed from Quiz.", Toast.LENGTH_SHORT).show();
@@ -156,6 +292,15 @@ public class EditAlmanacActivity extends AppCompatActivity {
                 intent.putExtra("SOURCE_PAGE", "EDIT_ALMANAC");
                 v.getContext().startActivity(intent);
             });
+
+            // Checkbox Setup
+            holder.cbSelectEditWord.setOnCheckedChangeListener(null);
+            holder.cbSelectEditWord.setChecked(currentWord.isSelected);
+
+            holder.cbSelectEditWord.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                currentWord.isSelected = isChecked;
+                updateSelectAllCheckboxState();
+            });
         }
 
         @Override
@@ -167,12 +312,14 @@ public class EditAlmanacActivity extends AppCompatActivity {
             ImageView ivImage;
             ImageView ivStar;
             TextView tvWord;
+            CheckBox cbSelectEditWord;
 
             public WordViewHolder(@NonNull View itemView) {
                 super(itemView);
                 ivImage = itemView.findViewById(R.id.ivGalleryImage);
                 tvWord = itemView.findViewById(R.id.tvGalleryWord);
                 ivStar = itemView.findViewById(R.id.ivStar);
+                cbSelectEditWord = itemView.findViewById(R.id.cbSelectEditWord);
             }
         }
     }
