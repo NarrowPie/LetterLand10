@@ -49,6 +49,8 @@
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
+            android:clickable="true"
+            android:focusable="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

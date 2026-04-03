@@ -192,6 +192,8 @@
         android:layout_height="match_parent"
         android:background="#FFF59D"
         android:elevation="50dp"
+        android:clickable="true"
+        android:focusable="true"
         android:visibility="gone"
         tools:visibility="visible">
 
