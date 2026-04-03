@@ -3,9 +3,13 @@ package com.example.letterland;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.media.AudioAttributes;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
@@ -26,12 +30,19 @@ import com.google.mlkit.vision.digitalink.DigitalInkRecognizer;
 import com.google.mlkit.vision.digitalink.DigitalInkRecognizerOptions;
 import com.google.mlkit.vision.digitalink.Ink;
 
+import java.util.Locale;
+
 public class WriteActivity extends AppCompatActivity {
 
     private DrawingView drawingView;
     private TextView tvLiveText;
+    private MaterialButton btnSpeakLiveText;
 
     private DigitalInkRecognizer recognizer;
+
+    // TTS Variables
+    private TextToSpeech textToSpeech;
+    private boolean isTtsReady = false;
 
     private String pendingWord = "";
     private String currentlyDetectedWord = "";
@@ -58,11 +69,66 @@ public class WriteActivity extends AppCompatActivity {
 
         drawingView = findViewById(R.id.drawingView);
         tvLiveText = findViewById(R.id.tvLiveText);
+        btnSpeakLiveText = findViewById(R.id.btnSpeakLiveText);
         MaterialButton btnClear = findViewById(R.id.btnClear);
         MaterialButton btnProceed = findViewById(R.id.btnProceed);
         ImageButton btnBack = findViewById(R.id.btnBackWrite);
 
         btnBack.setOnClickListener(v -> finish());
+
+        // Initialize TextToSpeech
+        textToSpeech = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int result = textToSpeech.setLanguage(Locale.US);
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    runOnUiThread(() -> Toast.makeText(this, "Voice language not supported.", Toast.LENGTH_SHORT).show());
+                } else {
+                    isTtsReady = true;
+                }
+            }
+        });
+
+        // 🌟 Audio Ducking Listener
+        textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String utteranceId) {
+                SoundManager.getInstance(getApplicationContext()).duckBackgroundMusic();
+            }
+
+            @Override
+            public void onDone(String utteranceId) {
+                SoundManager.getInstance(getApplicationContext()).restoreBackgroundMusic();
+            }
+
+            @Override
+            public void onError(String utteranceId) {
+                SoundManager.getInstance(getApplicationContext()).restoreBackgroundMusic();
+            }
+        });
+
+        // Read Aloud Button Logic
+        btnSpeakLiveText.setOnClickListener(v -> {
+            if (!isTtsReady) {
+                Toast.makeText(this, "Voice is loading...", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (currentlyDetectedWord != null && !currentlyDetectedWord.isEmpty() && !currentlyDetectedWord.equals("...")) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build();
+                    textToSpeech.setAudioAttributes(audioAttributes);
+                    Bundle params = new Bundle();
+                    params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
+                    textToSpeech.speak(currentlyDetectedWord, TextToSpeech.QUEUE_ADD, params, "TTS_ID");
+                } else {
+                    textToSpeech.speak(currentlyDetectedWord, TextToSpeech.QUEUE_ADD, null, "TTS_ID");
+                }
+            } else {
+                Toast.makeText(this, "Write something first!", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         tvLiveText.setText("Loading AI...");
 
@@ -116,7 +182,7 @@ public class WriteActivity extends AppCompatActivity {
         btnProceed.setOnClickListener(v -> {
             SoundManager.getInstance(this).playClick();
 
-            if (currentlyDetectedWord.isEmpty()) {
+            if (currentlyDetectedWord.isEmpty() || currentlyDetectedWord.equals("...")) {
                 Toast.makeText(this, "I couldn't read that! Try writing clearer.", Toast.LENGTH_SHORT).show();
             } else {
                 checkWordDatabase(currentlyDetectedWord);
@@ -239,7 +305,6 @@ public class WriteActivity extends AppCompatActivity {
 
         try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
 
-            // 🚀 FIX FOR BLACK IMAGES: Force a white background underneath
             Bitmap fixedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(fixedBitmap);
             canvas.drawColor(Color.WHITE);
@@ -272,6 +337,12 @@ public class WriteActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        // Clean up TextToSpeech memory
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+
         super.onDestroy();
         SoundManager.getInstance(this).stopScratchSound();
         if (scanRunnable != null) {

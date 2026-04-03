@@ -12,12 +12,16 @@ public class SoundManager {
     private int clickSoundId;
     private int shutterSoundId;
 
-    // ✏️ NEW: Pencil scratch variables
+    // ✏️ Pencil scratch variables
     private int scratchSoundId;
     private int scratchStreamId = 0;
 
     private MediaPlayer backgroundMusicPlayer;
     private boolean isSoundOn = true;
+
+    // 🎵 Volume Constants
+    private final float NORMAL_MUSIC_VOLUME = 0.2f;
+    private final float DUCKED_MUSIC_VOLUME = 0.05f;
 
     private SoundManager(Context context) {
         AudioAttributes audioAttributes = new AudioAttributes.Builder()
@@ -33,7 +37,7 @@ public class SoundManager {
         clickSoundId = soundPool.load(context, R.raw.button_pop, 1);
         shutterSoundId = soundPool.load(context, R.raw.shutter, 1);
 
-        // ✏️ NEW: Load the scratch sound
+        // ✏️ Load the scratch sound
         try {
             int scratchResId = context.getResources().getIdentifier("scratch", "raw", context.getPackageName());
             if (scratchResId != 0) {
@@ -53,8 +57,8 @@ public class SoundManager {
             backgroundMusicPlayer = MediaPlayer.create(context.getApplicationContext(), musicResId);
             if (backgroundMusicPlayer != null) {
                 backgroundMusicPlayer.setLooping(true);
-                // 🎵 LOWERED background music volume to 0.2f so the scratch sounds much louder!
-                backgroundMusicPlayer.setVolume(0.2f, 0.2f);
+                // 🎵 Initialize with normal volume
+                backgroundMusicPlayer.setVolume(NORMAL_MUSIC_VOLUME, NORMAL_MUSIC_VOLUME);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -80,15 +84,12 @@ public class SoundManager {
         }
     }
 
-    // ✏️ NEW: Start looping the scratch sound at MAX volume
     public void startScratchSound() {
         if (isSoundOn && scratchSoundId != 0 && scratchStreamId == 0) {
-            // Volume is 1.0f (Max). Loop is -1 (Loop forever until told to stop)
             scratchStreamId = soundPool.play(scratchSoundId, 1.0f, 1.0f, 0, -1, 1.0f);
         }
     }
 
-    // ✏️ NEW: Stop the scratch sound immediately when finger is lifted
     public void stopScratchSound() {
         if (scratchStreamId != 0) {
             soundPool.stop(scratchStreamId);
@@ -98,6 +99,7 @@ public class SoundManager {
 
     public void startBackgroundMusic() {
         if (isSoundOn && backgroundMusicPlayer != null && !backgroundMusicPlayer.isPlaying()) {
+            backgroundMusicPlayer.setVolume(NORMAL_MUSIC_VOLUME, NORMAL_MUSIC_VOLUME);
             backgroundMusicPlayer.start();
         }
     }
@@ -105,6 +107,20 @@ public class SoundManager {
     public void pauseBackgroundMusic() {
         if (backgroundMusicPlayer != null && backgroundMusicPlayer.isPlaying()) {
             backgroundMusicPlayer.pause();
+        }
+    }
+
+    // 🌟 Temporarily lower the music volume so the AI voice can be heard
+    public void duckBackgroundMusic() {
+        if (isSoundOn && backgroundMusicPlayer != null && backgroundMusicPlayer.isPlaying()) {
+            backgroundMusicPlayer.setVolume(DUCKED_MUSIC_VOLUME, DUCKED_MUSIC_VOLUME);
+        }
+    }
+
+    // 🌟 Restore the music volume after the AI voice finishes speaking
+    public void restoreBackgroundMusic() {
+        if (isSoundOn && backgroundMusicPlayer != null && backgroundMusicPlayer.isPlaying()) {
+            backgroundMusicPlayer.setVolume(NORMAL_MUSIC_VOLUME, NORMAL_MUSIC_VOLUME);
         }
     }
 

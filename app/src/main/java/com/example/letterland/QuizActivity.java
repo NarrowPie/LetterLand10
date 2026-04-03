@@ -2,9 +2,13 @@ package com.example.letterland;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
@@ -18,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.mlkit.common.MlKitException;
 import com.google.mlkit.common.model.DownloadConditions;
 import com.google.mlkit.common.model.RemoteModelManager;
@@ -31,14 +36,20 @@ import com.google.mlkit.vision.digitalink.Ink;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class QuizActivity extends AppCompatActivity {
 
     private DrawingView drawingView;
     private TextView tvLiveText, tvProgress;
     private ImageView ivQuizImage;
+    private MaterialButton btnSpeakLiveText;
 
     private DigitalInkRecognizer recognizer;
+
+    // TTS Variables
+    private TextToSpeech textToSpeech;
+    private boolean isTtsReady = false;
 
     private final Handler scanHandler = new Handler(Looper.getMainLooper());
     private Runnable scanRunnable;
@@ -59,6 +70,7 @@ public class QuizActivity extends AppCompatActivity {
         tvLiveText = findViewById(R.id.tvLiveText);
         tvProgress = findViewById(R.id.tvQuizProgress);
         ivQuizImage = findViewById(R.id.ivQuizImage);
+        btnSpeakLiveText = findViewById(R.id.btnSpeakLiveText);
 
         findViewById(R.id.btnBackQuiz).setOnClickListener(v -> finish());
 
@@ -70,6 +82,60 @@ public class QuizActivity extends AppCompatActivity {
         findViewById(R.id.cardQuizImage).setOnClickListener(v -> {
             if (!quizWords.isEmpty()) {
                 showZoomedImageDialog();
+            }
+        });
+
+        // Initialize TextToSpeech
+        textToSpeech = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int result = textToSpeech.setLanguage(Locale.US);
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    runOnUiThread(() -> Toast.makeText(this, "Voice language not supported.", Toast.LENGTH_SHORT).show());
+                } else {
+                    isTtsReady = true;
+                }
+            }
+        });
+
+        // 🌟 Audio Ducking Listener
+        textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String utteranceId) {
+                SoundManager.getInstance(getApplicationContext()).duckBackgroundMusic();
+            }
+
+            @Override
+            public void onDone(String utteranceId) {
+                SoundManager.getInstance(getApplicationContext()).restoreBackgroundMusic();
+            }
+
+            @Override
+            public void onError(String utteranceId) {
+                SoundManager.getInstance(getApplicationContext()).restoreBackgroundMusic();
+            }
+        });
+
+        // Read Aloud Button Logic
+        btnSpeakLiveText.setOnClickListener(v -> {
+            if (!isTtsReady) {
+                Toast.makeText(this, "Voice is loading...", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (currentlyDetectedWord != null && !currentlyDetectedWord.isEmpty() && !currentlyDetectedWord.equals("...")) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build();
+                    textToSpeech.setAudioAttributes(audioAttributes);
+                    Bundle params = new Bundle();
+                    params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
+                    textToSpeech.speak(currentlyDetectedWord, TextToSpeech.QUEUE_ADD, params, "TTS_ID");
+                } else {
+                    textToSpeech.speak(currentlyDetectedWord, TextToSpeech.QUEUE_ADD, null, "TTS_ID");
+                }
+            } else {
+                Toast.makeText(this, "Write an answer first!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -194,11 +260,9 @@ public class QuizActivity extends AppCompatActivity {
 
             if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
 
-                // 🚀 THE FINAL FIX: Force Glide to down-scale the massive camera image
-                // to 250x250 pixels before sending it to the GPU.
                 Glide.with(this)
                         .load(currentWord.imagePath)
-                        .override(250, 250) // Stops the GPU out-of-memory crash!
+                        .override(250, 250)
                         .centerCrop()
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .error(R.drawable.title_logo)
@@ -230,8 +294,6 @@ public class QuizActivity extends AppCompatActivity {
         WordEntry currentWord = quizWords.get(currentQuestionIndex);
 
         if (currentWord.imagePath != null && !currentWord.imagePath.isEmpty()) {
-
-            // 🚀 Force a safe size for the full-screen popup as well
             Glide.with(zoomDialog.getContext())
                     .load(currentWord.imagePath)
                     .override(800, 800)
@@ -357,6 +419,12 @@ public class QuizActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        // Clean up TextToSpeech memory
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+
         super.onDestroy();
         SoundManager.getInstance(this).stopScratchSound();
         if (scanRunnable != null) {

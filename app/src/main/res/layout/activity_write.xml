@@ -51,20 +51,39 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <TextView
-            android:id="@+id/tvLiveText"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginBottom="12dp"
-            android:fontFamily="@font/kid_font"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:gravity="center"
-            android:maxLines="1"
-            android:text="..."
-            android:textColor="#2196F3"
-            android:textStyle="bold"
-            app:autoSizeMaxTextSize="40sp"
-            app:autoSizeMinTextSize="18sp"
-            app:autoSizeTextType="uniform" />
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvLiveText"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="60dp"
+                android:fontFamily="@font/kid_font"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="..."
+                android:textColor="#2196F3"
+                android:textStyle="bold"
+                app:autoSizeMaxTextSize="40sp"
+                app:autoSizeMinTextSize="18sp"
+                app:autoSizeTextType="uniform" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSpeakLiveText"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="8dp"
+                android:text="🔊"
+                android:textSize="24sp"
+                android:padding="0dp"
+                app:backgroundTint="#FFCA28"
+                app:cornerRadius="15dp" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
