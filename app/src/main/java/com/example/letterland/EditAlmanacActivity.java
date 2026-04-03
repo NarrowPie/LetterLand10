@@ -106,8 +106,8 @@ public class EditAlmanacActivity extends AppCompatActivity {
                             // 1. Delete from Database
                             db.wordDao().delete(word);
 
-                            // 2. Add to History Logs!
-                            db.logDao().insertLog(new LogEntry("DELETED ALMANAC WORD", "Word: " + word.word, System.currentTimeMillis()));
+                            // 🚀 2. Add to History Logs WITH THE USER'S PROFILE NAME! 🚀
+                            db.logDao().insertLog(new LogEntry("DELETED ALMANAC WORD", "Word: " + word.word + " (Profile: " + word.profileName + ")", System.currentTimeMillis()));
 
                             // 3. Delete physical image file to save phone space
                             if (word.imagePath != null) {
@@ -176,7 +176,7 @@ public class EditAlmanacActivity extends AppCompatActivity {
     }
 
     private void loadWordsFromDatabase() {
-        // 🚀 GRAB THE ACTIVE PROFILE FIRST 🚀
+        // GRAB THE ACTIVE PROFILE FIRST
         SharedPreferences prefs = getSharedPreferences("LetterLandMemory", MODE_PRIVATE);
         String activeProfile = prefs.getString("ACTIVE_PROFILE", "");
 
@@ -184,7 +184,7 @@ public class EditAlmanacActivity extends AppCompatActivity {
             AppDatabase db = AppDatabase.getInstance(this);
             List<WordEntry> userWords;
 
-            // 🚀 FILTER BY ACTIVE PROFILE 🚀
+            // FILTER BY ACTIVE PROFILE
             if (activeProfile.isEmpty()) {
                 userWords = db.wordDao().getAllWords(); // Safety fallback
             } else {

@@ -16,6 +16,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
@@ -30,8 +31,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import com.google.common.util.concurrent.ListenableFuture;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
@@ -39,6 +40,8 @@ import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class PlayActivity extends AppCompatActivity {
 
@@ -59,6 +62,9 @@ public class PlayActivity extends AppCompatActivity {
 
     private final List<String> DICTIONARY = new java.util.ArrayList<>();
 
+    // 🌟 OPTIMIZATION: Background thread manager to stop UI freezing
+    private ExecutorService cameraExecutor;
+
     private final ActivityResultLauncher<Void> takePictureLauncher = registerForActivityResult(
             new ActivityResultContracts.TakePicturePreview(),
             bitmap -> {
@@ -71,30 +77,34 @@ public class PlayActivity extends AppCompatActivity {
             }
     );
 
-    // 🚀 REMOVED: The Gallery (pickImageLauncher) has been completely removed!
-
     private void loadDictionaryFromAssets() {
-        try {
-            java.io.InputStream is = getAssets().open("dictionary.txt");
-            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String word = line.toUpperCase().trim();
-                if (!word.isEmpty()) {
-                    DICTIONARY.add(word);
+        // 🌟 OPTIMIZATION: Loading dictionary in the background so the app opens faster
+        new Thread(() -> {
+            try {
+                java.io.InputStream is = getAssets().open("dictionary.txt");
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String word = line.toUpperCase().trim();
+                    if (!word.isEmpty()) {
+                        DICTIONARY.add(word);
+                    }
                 }
+                reader.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> Toast.makeText(PlayActivity.this, "Failed to load dictionary!", Toast.LENGTH_SHORT).show());
             }
-            reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Failed to load dictionary!", Toast.LENGTH_SHORT).show();
-        }
+        }).start();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play);
+
+        // Initialize the background thread
+        cameraExecutor = Executors.newSingleThreadExecutor();
 
         loadDictionaryFromAssets();
 
@@ -176,8 +186,6 @@ public class PlayActivity extends AppCompatActivity {
                             customDialog.dismiss();
                         });
 
-                        // 🚀 REMOVED: Gallery Button Logic has been stripped out.
-
                         dialogView.findViewById(R.id.btnDialogLater).setOnClickListener(v1 -> {
                             customDialog.dismiss();
                             resumeRealTimeScanning();
@@ -243,68 +251,81 @@ public class PlayActivity extends AppCompatActivity {
                 fullBitmap.recycle();
             }
 
-            InputImage image = InputImage.fromBitmap(croppedBitmap, 0);
+            // 🌟 OPTIMIZATION: Throw the heavy image and math into the background thread!
+            cameraExecutor.execute(() -> {
+                InputImage image = InputImage.fromBitmap(croppedBitmap, 0);
 
-            textRecognizer.process(image)
-                    .addOnSuccessListener(visionText -> {
-                        if (isScanningPaused) return;
+                textRecognizer.process(image)
+                        .addOnSuccessListener(cameraExecutor, visionText -> {
+                            if (isScanningPaused) return;
 
-                        String bestWord = "";
-                        Rect bestBox = null;
-                        float closestDistance = Float.MAX_VALUE;
+                            String bestWord = "";
+                            Rect bestBox = null;
+                            float closestDistance = Float.MAX_VALUE;
 
-                        float targetX = width / 2f;
-                        float targetY = height / 2f;
-                        if (manualFocusPoint != null) {
-                            targetX = manualFocusPoint.x;
-                            targetY = manualFocusPoint.y;
-                        }
+                            float targetX = width / 2f;
+                            float targetY = height / 2f;
+                            if (manualFocusPoint != null) {
+                                targetX = manualFocusPoint.x;
+                                targetY = manualFocusPoint.y;
+                            }
 
-                        for (Text.TextBlock block : visionText.getTextBlocks()) {
-                            for (Text.Line line : block.getLines()) {
-                                for (Text.Element element : line.getElements()) {
-                                    String rawWord = element.getText().toUpperCase().replaceAll("[^A-Z]", "");
-                                    String smartWord = findClosestWord(rawWord);
-                                    if (!smartWord.isEmpty() && smartWord.length() <= 10) {
-                                        Rect wordBox = element.getBoundingBox();
-                                        if (wordBox != null) {
-                                            float wordCenterX = wordBox.exactCenterX();
-                                            float wordCenterY = wordBox.exactCenterY();
-                                            float dx = wordCenterX - targetX;
-                                            float dy = wordCenterY - targetY;
-                                            float distance = (dx * dx) + (dy * dy);
-                                            if (distance < closestDistance) {
-                                                closestDistance = distance;
-                                                bestWord = smartWord;
-                                                bestBox = wordBox;
+                            for (Text.TextBlock block : visionText.getTextBlocks()) {
+                                for (Text.Line line : block.getLines()) {
+                                    for (Text.Element element : line.getElements()) {
+                                        String rawWord = element.getText().toUpperCase().replaceAll("[^A-Z]", "");
+
+                                        // The dictionary loop now runs safely without freezing the screen
+                                        String smartWord = findClosestWord(rawWord);
+
+                                        if (!smartWord.isEmpty() && smartWord.length() <= 10) {
+                                            Rect wordBox = element.getBoundingBox();
+                                            if (wordBox != null) {
+                                                float wordCenterX = wordBox.exactCenterX();
+                                                float wordCenterY = wordBox.exactCenterY();
+                                                float dx = wordCenterX - targetX;
+                                                float dy = wordCenterY - targetY;
+                                                float distance = (dx * dx) + (dy * dy);
+                                                if (distance < closestDistance) {
+                                                    closestDistance = distance;
+                                                    bestWord = smartWord;
+                                                    bestBox = wordBox;
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        if (!bestWord.isEmpty() && bestBox != null) {
-                            currentlyHighlightedWord = bestWord;
-                            highlightBox.setTranslationX(bestBox.left);
-                            highlightBox.setTranslationY(bestBox.top);
+                            final String finalWord = bestWord;
+                            final Rect finalBox = bestBox;
 
-                            ViewGroup.LayoutParams params = highlightBox.getLayoutParams();
-                            params.width = bestBox.width();
-                            params.height = bestBox.height();
-                            highlightBox.setLayoutParams(params);
-                            highlightBox.setVisibility(View.VISIBLE);
-                        } else {
-                            currentlyHighlightedWord = "";
-                            highlightBox.setVisibility(View.GONE);
-                        }
-                    })
-                    .addOnCompleteListener(task -> {
-                        croppedBitmap.recycle();
-                        if (!isScanningPaused) {
-                            realTimeHandler.postDelayed(realTimeRunnable, 300);
-                        }
-                    });
+                            // 🌟 Now jump back to the Main Thread ONLY to move the green box
+                            runOnUiThread(() -> {
+                                if (!finalWord.isEmpty() && finalBox != null) {
+                                    currentlyHighlightedWord = finalWord;
+                                    highlightBox.setTranslationX(finalBox.left);
+                                    highlightBox.setTranslationY(finalBox.top);
+
+                                    ViewGroup.LayoutParams params = highlightBox.getLayoutParams();
+                                    params.width = finalBox.width();
+                                    params.height = finalBox.height();
+                                    highlightBox.setLayoutParams(params);
+                                    highlightBox.setVisibility(View.VISIBLE);
+                                } else {
+                                    currentlyHighlightedWord = "";
+                                    highlightBox.setVisibility(View.GONE);
+                                }
+                            });
+                        })
+                        .addOnCompleteListener(task -> {
+                            // 🌟 OPTIMIZATION: Immediate memory cleanup keeps the phone cool
+                            croppedBitmap.recycle();
+                            if (!isScanningPaused) {
+                                realTimeHandler.postDelayed(realTimeRunnable, 300);
+                            }
+                        });
+            });
         }
     };
 
@@ -402,5 +423,9 @@ public class PlayActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         realTimeHandler.removeCallbacks(realTimeRunnable);
+        // 🌟 Prevent memory leaks when leaving the activity
+        if (cameraExecutor != null) {
+            cameraExecutor.shutdown();
+        }
     }
 }
