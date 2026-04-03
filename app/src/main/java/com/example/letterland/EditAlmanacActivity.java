@@ -1,6 +1,7 @@
 package com.example.letterland;
 
 import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
@@ -175,21 +176,32 @@ public class EditAlmanacActivity extends AppCompatActivity {
     }
 
     private void loadWordsFromDatabase() {
+        // 🚀 GRAB THE ACTIVE PROFILE FIRST 🚀
+        SharedPreferences prefs = getSharedPreferences("LetterLandMemory", MODE_PRIVATE);
+        String activeProfile = prefs.getString("ACTIVE_PROFILE", "");
+
         new Thread(() -> {
             AppDatabase db = AppDatabase.getInstance(this);
-            // Grab all words using your existing Dao function
-            List<WordEntry> allWords = db.wordDao().getAllWords();
+            List<WordEntry> userWords;
+
+            // 🚀 FILTER BY ACTIVE PROFILE 🚀
+            if (activeProfile.isEmpty()) {
+                userWords = db.wordDao().getAllWords(); // Safety fallback
+            } else {
+                userWords = db.wordDao().getAllWordsForProfile(activeProfile); // ONLY the active kid's words
+            }
+
             List<WordEntry> displayWords = new ArrayList<>();
 
-            // Filter them in Java so we don't have to add new Dao functions!
+            // Filter them in Java for the Starred/Quiz toggle
             if (isShowingStarredOnly) {
-                for (WordEntry word : allWords) {
+                for (WordEntry word : userWords) {
                     if (word.isStarred) {
                         displayWords.add(word);
                     }
                 }
             } else {
-                displayWords.addAll(allWords);
+                displayWords.addAll(userWords);
             }
 
             runOnUiThread(() -> {
